@@ -33,6 +33,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(User::Uuid).uuid().not_null())
                     .col(ColumnDef::new(User::Firstname).string())
                     .col(ColumnDef::new(User::Lastname).string())
+                    .col(ColumnDef::new(User::Email).string())
                     .col(ColumnDef::new(User::Password).string())
                     .col(ColumnDef::new(User::Meta).text())
                     .col(ColumnDef::new(User::CreatedAt).timestamp().null())
@@ -57,6 +58,7 @@ pub enum User {
     Uuid,
     Firstname,
     Lastname,
+    Email,
     Password,
     Meta,
     CreatedAt,

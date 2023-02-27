@@ -10,6 +10,7 @@ pub struct Model {
     pub uuid: Vec<u8>,
     pub firstname: Option<String>,
     pub lastname: Option<String>,
+    pub email: Option<String>,
     pub password: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub meta: Option<String>,
