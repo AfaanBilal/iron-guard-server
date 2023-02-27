@@ -16,9 +16,15 @@ fn index() -> &'static str {
     "Iron Guard"
 }
 
+#[catch(404)]
+fn not_found() -> &'static str {
+    "404 Not Found"
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
+        .register("/", catchers![not_found])
         .mount("/", routes![index])
         .mount(
             "/users",
