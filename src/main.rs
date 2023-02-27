@@ -8,8 +8,12 @@
 
 #[macro_use]
 extern crate rocket;
+use migrator::Migrator;
+use sea_orm_migration::prelude::*;
 
 mod controllers;
+mod db;
+mod migrator;
 
 #[get("/")]
 fn index() -> &'static str {
@@ -22,8 +26,19 @@ fn not_found() -> &'static str {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    let db = match db::set_up_db().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", err),
+    };
+
+    match Migrator::refresh(&db).await {
+        Err(err) => panic!("{}", err),
+        Ok(_) => 0,
+    };
+
     rocket::build()
+        .manage(db)
         .register("/", catchers![not_found])
         .mount("/", routes![index])
         .mount(
