@@ -42,6 +42,12 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Item::Name).string())
                     .col(ColumnDef::new(Item::Description).text())
+                    .col(
+                        ColumnDef::new(Item::Quantity)
+                            .integer()
+                            .unsigned()
+                            .default(0),
+                    )
                     .col(ColumnDef::new(Item::Meta).text())
                     .col(ColumnDef::new(Item::CreatedAt).timestamp().null())
                     .col(ColumnDef::new(Item::UpdatedAt).timestamp().null())
@@ -66,6 +72,7 @@ pub enum Item {
     CategoryId,
     Name,
     Description,
+    Quantity,
     Meta,
     CreatedAt,
     UpdatedAt,
