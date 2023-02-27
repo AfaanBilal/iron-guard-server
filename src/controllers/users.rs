@@ -11,6 +11,7 @@ use rocket::{
 };
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 use serde_json::json;
+use uuid::Uuid;
 
 use crate::{
     entities::{prelude::*, user},
@@ -48,6 +49,7 @@ pub async fn store(
     let db = db as &DatabaseConnection;
 
     let new_user = user::ActiveModel {
+        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
         firstname: ActiveValue::Set(Some(req_user.firstname.to_owned())),
         lastname: ActiveValue::Set(Some(req_user.lastname.to_owned())),
         email: ActiveValue::Set(Some(req_user.email.to_owned())),

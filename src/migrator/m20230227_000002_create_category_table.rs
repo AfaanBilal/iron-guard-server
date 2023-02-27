@@ -30,7 +30,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Category::Uuid).uuid().not_null())
+                    .col(ColumnDef::new(Category::Uuid).string().unique_key().not_null())
                     .col(ColumnDef::new(Category::ParentId).integer().null())
                     .foreign_key(
                         ForeignKey::create()

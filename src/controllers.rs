@@ -6,5 +6,5 @@
  * @link   https://github.com/AfaanBilal/iron-guard
  */
 pub mod categories;
-pub mod items;
+// pub mod items;
 pub mod users;

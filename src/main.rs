@@ -62,16 +62,16 @@ async fn rocket() -> _ {
                 controllers::categories::delete
             ],
         )
-        .mount(
-            "/items",
-            routes![
-                controllers::items::index,
-                controllers::items::store,
-                controllers::items::show,
-                controllers::items::update,
-                controllers::items::delete
-            ],
-        )
+    // .mount(
+    //     "/items",
+    //     routes![
+    //         controllers::items::index,
+    //         controllers::items::store,
+    //         controllers::items::show,
+    //         controllers::items::update,
+    //         controllers::items::delete
+    //     ],
+    // )
 }
 
 #[derive(Responder)]
