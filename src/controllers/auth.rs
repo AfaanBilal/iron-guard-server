@@ -18,7 +18,7 @@ use rocket::{
 };
 use sea_orm::*;
 
-use super::{error_response, success, ErrorResponder};
+use super::{error_response, ErrorResponder};
 use crate::{
     entities::{prelude::*, user},
     Config,
@@ -150,9 +150,4 @@ pub async fn sign_in(
         status: "success".to_string(),
         token,
     }))
-}
-
-#[post("/sign-out")]
-pub async fn sign_out() -> Result<String, ErrorResponder> {
-    success()
 }
