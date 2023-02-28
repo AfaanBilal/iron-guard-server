@@ -18,6 +18,8 @@ use crate::{
     ErrorResponder,
 };
 
+use super::success;
+
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ReqUser<'r> {
@@ -59,7 +61,7 @@ pub async fn store(
 
     User::insert(new_user).exec(db).await?;
 
-    Ok(json!({ "status": "success" }).to_string())
+    Ok(success())
 }
 
 #[get("/<id>")]
@@ -68,11 +70,14 @@ pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, Err
 
     let user = User::find_by_id(id).one(db).await?;
 
-    Ok(if let Some(user) = user {
-        json!({ "id": user.id, "firstname": user.firstname, "lastname": user.lastname }).to_string()
+    if let Some(user) = user {
+        Ok(
+            json!({ "id": user.id, "firstname": user.firstname, "lastname": user.lastname })
+                .to_string(),
+        )
     } else {
-        return Err(format!("404 No user found.").into());
-    })
+        Err(format!("404 No user found.").into())
+    }
 }
 
 #[put("/<id>", data = "<req_user>")]
@@ -94,7 +99,7 @@ pub async fn update(
 
     user.update(db).await?;
 
-    Ok("Updated".to_owned())
+    Ok(success())
 }
 
 #[delete("/<id>")]
@@ -103,5 +108,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     User::delete_by_id(id).exec(db).await?;
 
-    Ok("Deleted".to_owned())
+    Ok(success())
 }

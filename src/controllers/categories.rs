@@ -18,6 +18,8 @@ use crate::{
     ErrorResponder,
 };
 
+use super::success;
+
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ReqCategory<'r> {
@@ -57,7 +59,7 @@ pub async fn store(
 
     Category::insert(new_category).exec(db).await?;
 
-    Ok(json!({ "status": "success" }).to_string())
+    Ok(success())
 }
 
 #[get("/<id>")]
@@ -66,11 +68,11 @@ pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, Err
 
     let category = Category::find_by_id(id).one(db).await?;
 
-    Ok(if let Some(category) = category {
-        json!({ "id": category.id, "name": category.name }).to_string()
+    if let Some(category) = category {
+        Ok(json!({ "id": category.id, "name": category.name }).to_string())
     } else {
-        return Err(format!("404 No category found.").into());
-    })
+        Err(format!("404 No category found.").into())
+    }
 }
 
 #[put("/<id>", data = "<req_category>")]
@@ -91,7 +93,7 @@ pub async fn update(
 
     user.update(db).await?;
 
-    Ok("Updated".to_owned())
+    Ok(success())
 }
 
 #[delete("/<id>")]
@@ -100,5 +102,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     Category::delete_by_id(id).exec(db).await?;
 
-    Ok("Deleted".to_owned())
+    Ok(success())
 }

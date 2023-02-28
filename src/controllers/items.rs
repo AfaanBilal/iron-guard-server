@@ -18,6 +18,8 @@ use crate::{
     ErrorResponder,
 };
 
+use super::success;
+
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ReqItem<'r> {
@@ -59,7 +61,7 @@ pub async fn store(
 
     Item::insert(new_item).exec(db).await?;
 
-    Ok(json!({ "status": "success" }).to_string())
+    Ok(success())
 }
 
 #[get("/<id>")]
@@ -68,11 +70,11 @@ pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, Err
 
     let item = Item::find_by_id(id).one(db).await?;
 
-    Ok(if let Some(item) = item {
-        json!({ "id": item.id, "name": item.name }).to_string()
+    if let Some(item) = item {
+        Ok(json!({ "id": item.id, "name": item.name }).to_string())
     } else {
-        return Err(format!("404 No item found.").into());
-    })
+        Err(format!("404 No item found.").into())
+    }
 }
 
 #[put("/<id>", data = "<req_item>")]
@@ -94,7 +96,7 @@ pub async fn update(
 
     item.update(db).await?;
 
-    Ok("Updated".to_owned())
+    Ok(success())
 }
 
 #[delete("/<id>")]
@@ -103,5 +105,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     Item::delete_by_id(id).exec(db).await?;
 
-    Ok("Deleted".to_owned())
+    Ok(success())
 }
