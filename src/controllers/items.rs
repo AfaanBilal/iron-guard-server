@@ -80,13 +80,14 @@ pub async fn index(
 #[post("/", data = "<req_item>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let new_item = item::ActiveModel {
         uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
+        user_id: ActiveValue::Set(user.id),
         category_id: ActiveValue::Set(req_item.category_id),
         name: ActiveValue::Set(Some(req_item.name.to_owned())),
         description: ActiveValue::Set(Some(req_item.description.to_owned())),

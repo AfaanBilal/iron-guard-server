@@ -84,13 +84,14 @@ pub async fn index(
 #[post("/", data = "<req_category>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     req_category: Json<RequestCategory<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let new_category = category::ActiveModel {
         uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
+        user_id: ActiveValue::Set(user.id),
         name: ActiveValue::Set(Some(req_category.name.to_owned())),
         description: ActiveValue::Set(Some(req_category.description.to_owned())),
         parent_id: ActiveValue::Set(req_category.parent_id),

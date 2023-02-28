@@ -10,7 +10,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub uuid: String,
     pub parent_id: Option<i32>,
-    pub user_id: Option<i32>,
+    pub user_id: i32,
     pub name: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,

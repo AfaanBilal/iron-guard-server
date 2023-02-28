@@ -40,7 +40,7 @@ impl MigrationTrait for Migration {
                             .from(Category::Table, Category::ParentId)
                             .to(Category::Table, Category::Id),
                     )
-                    .col(ColumnDef::new(Category::UserId).integer().null())
+                    .col(ColumnDef::new(Category::UserId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-category-user_id")
