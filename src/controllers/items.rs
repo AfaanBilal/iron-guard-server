@@ -22,7 +22,7 @@ use crate::entities::{item, prelude::*};
 pub struct RequestItem<'r> {
     category_id: Option<i32>,
     name: &'r str,
-    description: &'r str,
+    description: Option<String>,
     quantity: u32,
 }
 
@@ -92,7 +92,7 @@ pub async fn store(
         user_id: Set(user.id),
         category_id: Set(req_item.category_id),
         name: Set(req_item.name.to_owned()),
-        description: Set(Some(req_item.description.to_owned())),
+        description: Set(req_item.description.to_owned()),
         quantity: Set(req_item.quantity),
         ..Default::default()
     };
@@ -134,7 +134,7 @@ pub async fn update(
 
     item.category_id = Set(req_item.category_id);
     item.name = Set(req_item.name.to_owned());
-    item.description = Set(Some(req_item.description.to_owned()));
+    item.description = Set(req_item.description.to_owned());
     item.quantity = Set(req_item.quantity);
 
     item.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
