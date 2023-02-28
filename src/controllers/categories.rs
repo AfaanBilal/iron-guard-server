@@ -15,7 +15,8 @@ use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
-    auth::AuthenticatedUser, items::ResponseItem, not_found, success, ErrorResponder, ResponseList,
+    auth::AuthenticatedUser, items::ResponseItem, not_found, success, users::ResponseUser,
+    ErrorResponder, ResponseList,
 };
 use crate::entities::{category, prelude::*};
 
@@ -34,6 +35,7 @@ pub struct ResponseCategory {
     name: String,
     description: Option<String>,
     parent_id: Option<i32>,
+    user: Option<ResponseUser>,
     items: Vec<ResponseItem>,
 }
 
@@ -45,6 +47,7 @@ impl From<category::Model> for ResponseCategory {
             description: category.description,
             parent_id: category.parent_id,
             items: vec![],
+            user: None,
         }
     }
 }
@@ -124,8 +127,11 @@ pub async fn show(
         .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
+    let user = category.find_related(User).one(db).await?.unwrap();
+
     let mut response = ResponseCategory::from(category);
     response.items = items;
+    response.user = Some(ResponseUser::from(user));
 
     Ok(Json(response))
 }

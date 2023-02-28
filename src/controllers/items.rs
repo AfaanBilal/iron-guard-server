@@ -14,7 +14,9 @@ use rocket::{
 use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
-use super::{auth::AuthenticatedUser, not_found, success, ErrorResponder, ResponseList};
+use super::{
+    auth::AuthenticatedUser, not_found, success, users::ResponseUser, ErrorResponder, ResponseList,
+};
 use crate::entities::{item, prelude::*};
 
 #[derive(Deserialize)]
@@ -31,6 +33,7 @@ pub struct RequestItem<'r> {
 pub struct ResponseItem {
     pub uuid: String,
     pub category_id: Option<i32>,
+    pub user: Option<ResponseUser>,
     pub name: String,
     pub description: Option<String>,
     pub quantity: u32,
@@ -41,6 +44,7 @@ impl From<item::Model> for ResponseItem {
         ResponseItem {
             uuid: item.uuid,
             category_id: item.category_id,
+            user: None,
             name: item.name,
             description: item.description,
             quantity: item.quantity,
@@ -113,7 +117,12 @@ pub async fn show(
         None => return Err(not_found()),
     };
 
-    Ok(Json(ResponseItem::from(item)))
+    let user = item.find_related(User).one(db).await?.unwrap();
+
+    let mut response = ResponseItem::from(item);
+    response.user = Some(ResponseUser::from(user));
+
+    Ok(Json(response))
 }
 
 #[put("/<uuid>", data = "<req_item>")]
