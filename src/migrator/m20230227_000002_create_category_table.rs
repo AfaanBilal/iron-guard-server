@@ -32,7 +32,12 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Category::Uuid).string().unique_key().not_null())
+                    .col(
+                        ColumnDef::new(Category::Uuid)
+                            .string()
+                            .unique_key()
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(Category::ParentId).integer().null())
                     .foreign_key(
                         ForeignKey::create()
@@ -47,11 +52,19 @@ impl MigrationTrait for Migration {
                             .from(Category::Table, Category::UserId)
                             .to(User::Table, User::Id),
                     )
-                    .col(ColumnDef::new(Category::Name).string())
+                    .col(ColumnDef::new(Category::Name).string().not_null())
                     .col(ColumnDef::new(Category::Description).text())
                     .col(ColumnDef::new(Category::Meta).text())
-                    .col(ColumnDef::new(Category::CreatedAt).timestamp().null())
-                    .col(ColumnDef::new(Category::UpdatedAt).timestamp().null())
+                    .col(
+                        ColumnDef::new(Category::CreatedAt)
+                            .timestamp()
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
+                    )
+                    .col(
+                        ColumnDef::new(Category::UpdatedAt)
+                            .timestamp()
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
+                    )
                     .col(ColumnDef::new(Category::DeletedAt).timestamp().null())
                     .to_owned(),
             )

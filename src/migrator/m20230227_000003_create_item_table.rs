@@ -49,7 +49,7 @@ impl MigrationTrait for Migration {
                             .from(Item::Table, Item::UserId)
                             .to(User::Table, User::Id),
                     )
-                    .col(ColumnDef::new(Item::Name).string())
+                    .col(ColumnDef::new(Item::Name).string().not_null())
                     .col(ColumnDef::new(Item::Description).text())
                     .col(
                         ColumnDef::new(Item::Quantity)
@@ -59,8 +59,16 @@ impl MigrationTrait for Migration {
                             .default(0),
                     )
                     .col(ColumnDef::new(Item::Meta).text())
-                    .col(ColumnDef::new(Item::CreatedAt).timestamp().null())
-                    .col(ColumnDef::new(Item::UpdatedAt).timestamp().null())
+                    .col(
+                        ColumnDef::new(Item::CreatedAt)
+                            .timestamp()
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
+                    )
+                    .col(
+                        ColumnDef::new(Item::UpdatedAt)
+                            .timestamp()
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
+                    )
                     .col(ColumnDef::new(Item::DeletedAt).timestamp().null())
                     .to_owned(),
             )

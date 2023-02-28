@@ -11,13 +11,13 @@ pub struct Model {
     pub uuid: String,
     pub parent_id: Option<i32>,
     pub user_id: i32,
-    pub name: Option<String>,
+    pub name: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub meta: Option<String>,
-    pub created_at: Option<DateTimeUtc>,
-    pub updated_at: Option<DateTimeUtc>,
+    pub created_at: DateTimeUtc,
+    pub updated_at: DateTimeUtc,
     pub deleted_at: Option<DateTimeUtc>,
 }
 

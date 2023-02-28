@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 /**
  * Iron Guard Server
  *
@@ -9,7 +11,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::*;
+use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{auth::AuthenticatedUser, not_found, success, ErrorResponder, ResponseList};
@@ -30,7 +32,7 @@ pub struct ResponseItem {
     pub id: i32,
     pub uuid: String,
     pub category_id: Option<i32>,
-    pub name: Option<String>,
+    pub name: String,
     pub description: Option<String>,
     pub quantity: u32,
 }
@@ -86,12 +88,12 @@ pub async fn store(
     let db = db as &DatabaseConnection;
 
     let new_item = item::ActiveModel {
-        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        user_id: ActiveValue::Set(user.id),
-        category_id: ActiveValue::Set(req_item.category_id),
-        name: ActiveValue::Set(Some(req_item.name.to_owned())),
-        description: ActiveValue::Set(Some(req_item.description.to_owned())),
-        quantity: ActiveValue::Set(req_item.quantity),
+        uuid: Set(Uuid::new_v4().to_string()),
+        user_id: Set(user.id),
+        category_id: Set(req_item.category_id),
+        name: Set(req_item.name.to_owned()),
+        description: Set(Some(req_item.description.to_owned())),
+        quantity: Set(req_item.quantity),
         ..Default::default()
     };
 
@@ -125,19 +127,17 @@ pub async fn update(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let item = match Item::from_uuid(db, uuid).await? {
-        Some(i) => i,
+    let mut item: item::ActiveModel = match Item::from_uuid(db, uuid).await? {
+        Some(i) => i.into(),
         None => return Err(not_found()),
     };
 
-    let item = item::ActiveModel {
-        id: ActiveValue::Set(item.id),
-        category_id: ActiveValue::Set(req_item.category_id),
-        name: ActiveValue::Set(Some(req_item.name.to_owned())),
-        description: ActiveValue::Set(Some(req_item.description.to_owned())),
-        quantity: ActiveValue::Set(req_item.quantity),
-        ..Default::default()
-    };
+    item.category_id = Set(req_item.category_id);
+    item.name = Set(req_item.name.to_owned());
+    item.description = Set(Some(req_item.description.to_owned()));
+    item.quantity = Set(req_item.quantity);
+
+    item.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
 
     item.update(db).await?;
 

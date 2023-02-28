@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 /**
  * Iron Guard Server
  *
@@ -10,7 +12,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::*;
+use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
@@ -100,12 +102,12 @@ pub async fn store(
     let db = db as &DatabaseConnection;
 
     let new_user = user::ActiveModel {
-        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        role: ActiveValue::Set(req_user.role.to_owned()),
-        firstname: ActiveValue::Set(req_user.firstname.to_owned()),
-        lastname: ActiveValue::Set(req_user.lastname.to_owned()),
-        email: ActiveValue::Set(req_user.email.to_owned()),
-        password: ActiveValue::Set(hash(req_user.password, DEFAULT_COST).unwrap()),
+        uuid: Set(Uuid::new_v4().to_string()),
+        role: Set(req_user.role.to_owned()),
+        firstname: Set(req_user.firstname.to_owned()),
+        lastname: Set(req_user.lastname.to_owned()),
+        email: Set(req_user.email.to_owned()),
+        password: Set(hash(req_user.password, DEFAULT_COST).unwrap()),
         ..Default::default()
     };
 
@@ -147,23 +149,21 @@ pub async fn update(
 
     let db = db as &DatabaseConnection;
 
-    let user = match User::from_uuid(db, uuid).await? {
-        Some(u) => u,
+    let mut user: user::ActiveModel = match User::from_uuid(db, uuid).await? {
+        Some(u) => u.into(),
         None => return Err(not_found()),
     };
 
-    let user = user::ActiveModel {
-        id: ActiveValue::Set(user.id),
-        role: ActiveValue::Set(req_user.role.to_owned()),
-        firstname: ActiveValue::Set(req_user.firstname.to_owned()),
-        lastname: ActiveValue::Set(req_user.lastname.to_owned()),
-        email: ActiveValue::Set(req_user.email.to_owned()),
-        password: match req_user.password {
-            "" => ActiveValue::NotSet,
-            _ => ActiveValue::Set(hash(req_user.password, DEFAULT_COST).unwrap()),
-        },
-        ..Default::default()
-    };
+    user.role = Set(req_user.role.to_owned());
+    user.firstname = Set(req_user.firstname.to_owned());
+    user.lastname = Set(req_user.lastname.to_owned());
+    user.email = Set(req_user.email.to_owned());
+
+    if req_user.password != "" {
+        user.password = Set(hash(req_user.password, DEFAULT_COST).unwrap());
+    }
+
+    user.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
 
     user.update(db).await?;
 

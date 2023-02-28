@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 /**
  * Iron Guard Server
  *
@@ -9,7 +11,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::*;
+use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
@@ -30,7 +32,7 @@ pub struct RequestCategory<'r> {
 pub struct ResponseCategory {
     id: i32,
     uuid: String,
-    name: Option<String>,
+    name: String,
     description: Option<String>,
     parent_id: Option<i32>,
     items: Vec<ResponseItem>,
@@ -90,11 +92,11 @@ pub async fn store(
     let db = db as &DatabaseConnection;
 
     let new_category = category::ActiveModel {
-        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        user_id: ActiveValue::Set(user.id),
-        name: ActiveValue::Set(Some(req_category.name.to_owned())),
-        description: ActiveValue::Set(Some(req_category.description.to_owned())),
-        parent_id: ActiveValue::Set(req_category.parent_id),
+        uuid: Set(Uuid::new_v4().to_string()),
+        user_id: Set(user.id),
+        name: Set(req_category.name.to_owned()),
+        description: Set(Some(req_category.description.to_owned())),
+        parent_id: Set(req_category.parent_id),
         ..Default::default()
     };
 
@@ -139,20 +141,18 @@ pub async fn update(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let category = match Category::from_uuid(db, uuid).await? {
-        Some(c) => c,
+    let mut category: category::ActiveModel = match Category::from_uuid(db, uuid).await? {
+        Some(c) => c.into(),
         None => return Err(not_found()),
     };
 
-    let user = category::ActiveModel {
-        id: ActiveValue::Set(category.id),
-        name: ActiveValue::Set(Some(req_category.name.to_owned())),
-        description: ActiveValue::Set(Some(req_category.description.to_owned())),
-        parent_id: ActiveValue::Set(req_category.parent_id),
-        ..Default::default()
-    };
+    category.name = Set(req_category.name.to_owned());
+    category.description = Set(Some(req_category.description.to_owned()));
+    category.parent_id = Set(req_category.parent_id);
 
-    user.update(db).await?;
+    category.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
+
+    category.update(db).await?;
 
     success()
 }
