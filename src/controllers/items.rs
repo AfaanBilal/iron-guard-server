@@ -29,7 +29,6 @@ pub struct RequestItem<'r> {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ResponseItem {
-    pub id: i32,
     pub uuid: String,
     pub category_id: Option<i32>,
     pub name: String,
@@ -40,7 +39,6 @@ pub struct ResponseItem {
 impl From<item::Model> for ResponseItem {
     fn from(item: item::Model) -> ResponseItem {
         ResponseItem {
-            id: item.id,
             uuid: item.uuid,
             category_id: item.category_id,
             name: item.name,

@@ -35,7 +35,6 @@ pub struct RequestUser<'r> {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ResponseUser {
-    id: i32,
     uuid: String,
     role: String,
     firstname: String,
@@ -46,7 +45,6 @@ pub struct ResponseUser {
 impl From<user::Model> for ResponseUser {
     fn from(user: user::Model) -> ResponseUser {
         ResponseUser {
-            id: user.id,
             uuid: user.uuid,
             role: user.role,
             firstname: user.firstname,

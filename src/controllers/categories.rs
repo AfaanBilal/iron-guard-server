@@ -30,7 +30,6 @@ pub struct RequestCategory<'r> {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ResponseCategory {
-    id: i32,
     uuid: String,
     name: String,
     description: Option<String>,
@@ -41,7 +40,6 @@ pub struct ResponseCategory {
 impl From<category::Model> for ResponseCategory {
     fn from(category: category::Model) -> ResponseCategory {
         ResponseCategory {
-            id: category.id,
             uuid: category.uuid,
             name: category.name,
             description: category.description,
