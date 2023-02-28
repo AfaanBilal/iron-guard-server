@@ -41,7 +41,7 @@ impl Role {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 struct Claims {
-    sub: String,
+    sub: i32,
     role: String,
     exp: u64,
 }
@@ -62,6 +62,7 @@ pub struct ResponseSignIn {
 
 pub struct AuthenticatedUser {
     pub role: Role,
+    pub id: i32,
 }
 
 #[rocket::async_trait]
@@ -82,8 +83,14 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
             };
 
             match Role::from_str(&claims.role) {
-                Role::User => Outcome::Success(AuthenticatedUser { role: Role::User }),
-                Role::Admin => Outcome::Success(AuthenticatedUser { role: Role::Admin }),
+                Role::User => Outcome::Success(AuthenticatedUser {
+                    role: Role::User,
+                    id: claims.sub,
+                }),
+                Role::Admin => Outcome::Success(AuthenticatedUser {
+                    role: Role::Admin,
+                    id: claims.sub,
+                }),
             }
         } else {
             Outcome::Failure((Status::Unauthorized, ()))
@@ -120,7 +127,7 @@ pub async fn sign_in(
 
     let claims = Claims {
         role: u.role,
-        sub: u.uuid,
+        sub: u.id,
         exp: SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
