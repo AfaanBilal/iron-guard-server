@@ -10,15 +10,15 @@
 ## Configuration
 The following environment variables configure the server.
 
-| Environment Variable    | Default value | Description
-| :---------------------- | :------------ | :-----------
-| IRON_GUARD_SECRET       | `test`        | Set the JWT signing secret. Must be set.
-| IRON_GUARD_DB_TYPE      | `mysql`       | Set the database type. Options: `mysql`.
-| IRON_GUARD_DB_HOST      | `0.0.0.0`     | Server Bind Host.
-| IRON_GUARD_DB_PORT      | `3306`        | Server Port.
-| IRON_GUARD_DB_USERNAME  | `root`        | Set the username. Must be set if authentication is enabled.
-| IRON_GUARD_DB_PASSWORD  | `[blank]`     | Set the password. Must be set if authentication is enabled.
-| IRON_GUARD_DB_DATABASE  | `iron_guard`  | Set the password. Must be set if authentication is enabled.
+| Environment Variable   | Default value | Description                                                 |
+| :--------------------- | :------------ | :---------------------------------------------------------- |
+| IRON_GUARD_SECRET      | `test`        | Set the JWT signing secret. Must be set.                    |
+| IRON_GUARD_DB_TYPE     | `mysql`       | Set the database type. Options: `mysql`.                    |
+| IRON_GUARD_DB_HOST     | `0.0.0.0`     | Server Bind Host.                                           |
+| IRON_GUARD_DB_PORT     | `3306`        | Server Port.                                                |
+| IRON_GUARD_DB_USERNAME | `root`        | Set the username. Must be set if authentication is enabled. |
+| IRON_GUARD_DB_PASSWORD | `[blank]`     | Set the password. Must be set if authentication is enabled. |
+| IRON_GUARD_DB_DATABASE | `iron_guard`  | Set the password. Must be set if authentication is enabled. |
 
 ---
 
@@ -29,6 +29,35 @@ cargo run
 
 ---
 
+## API
+
+| Method | Path                 | Auth? | Description                                    |
+| :----- | :------------------- | :---- | :--------------------------------------------- |
+| GET    | /                    | ⬜     | Index. Returns `Iron Guard`.                   |
+| POST   | /auth/sign-in        | ⬜     | Returns a JWT on success.                      |
+| GET    | /categories          | ✅     | Get a list of categories.                      |
+| POST   | /categories          | ✅     | Create a category.                             |
+| GET    | /categories/`{uuid}` | ✅     | Get a category with matching the `uuid`.       |
+| PUT    | /categories/`{uuid}` | ✅     | Update the category matching the `uuid`.       |
+| DELETE | /categories/`{uuid}` | ✅     | Delete the category matching the `uuid`.       |
+| GET    | /items               | ✅     | Get a list of items.                           |
+| POST   | /items               | ✅     | Create a item.                                 |
+| GET    | /items/`{uuid}`      | ✅     | Get a item with matching the `uuid`.           |
+| PUT    | /items/`{uuid}`      | ✅     | Update the item matching the `uuid`.           |
+| DELETE | /items/`{uuid}`      | ✅     | Delete the item matching the `uuid`.           |
+| GET    | /users               | ✅     | `[admin]` Get a list of users.                 |
+| POST   | /users               | ✅     | `[admin]` Create a user.                       |
+| GET    | /users/`{uuid}`      | ✅     | `[admin]` Get a user with matching the `uuid`. |
+| PUT    | /users/`{uuid}`      | ✅     | `[admin]` Update the user matching the `uuid`. |
+| DELETE | /users/`{uuid}`      | ✅     | `[admin]` Delete the user matching the `uuid`. |
+
+### Authentication
+- **Generating JWT**: Post to `/auth` with headers `username` and `password`. Returns JWT on success.
+- **All auth required requests**: Add header `Auth` with the JWT as the value.
+- **Token lifetime**: 6 hours.
+- **Token invalid or expired**: `AUTH_FAILED` is returned as response.
+
+---
 ## Test
 ````
 cargo test
