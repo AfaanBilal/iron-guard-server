@@ -10,6 +10,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub uuid: String,
     pub category_id: Option<i32>,
+    pub user_id: Option<i32>,
     pub name: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
@@ -31,11 +32,25 @@ pub enum Relation {
         on_delete = "Restrict"
     )]
     Category,
+    #[sea_orm(
+        belongs_to = "super::user::Entity",
+        from = "Column::UserId",
+        to = "super::user::Column::Id",
+        on_update = "Restrict",
+        on_delete = "Restrict"
+    )]
+    User,
 }
 
 impl Related<super::category::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Category.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
     }
 }
 

@@ -54,6 +54,15 @@ impl From<user::Model> for ResponseUser {
     }
 }
 
+impl User {
+    async fn from_uuid(db: &DatabaseConnection, uuid: &str) -> Result<Option<user::Model>, DbErr> {
+        User::find()
+            .filter(user::Column::Uuid.eq(uuid))
+            .one(db)
+            .await
+    }
+}
+
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
@@ -105,11 +114,11 @@ pub async fn store(
     success()
 }
 
-#[get("/<id>")]
+#[get("/<uuid>")]
 pub async fn show(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<Json<ResponseUser>, ErrorResponder> {
     if user.role != Role::Admin {
         return Err(admin_required());
@@ -117,7 +126,7 @@ pub async fn show(
 
     let db = db as &DatabaseConnection;
 
-    let user = match User::find_by_id(id).one(db).await? {
+    let user = match User::from_uuid(db, uuid).await? {
         Some(u) => u,
         None => return Err(not_found()),
     };
@@ -125,11 +134,11 @@ pub async fn show(
     Ok(Json(ResponseUser::from(user)))
 }
 
-#[put("/<id>", data = "<req_user>")]
+#[put("/<uuid>", data = "<req_user>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
     req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
     if user.role != Role::Admin {
@@ -138,8 +147,13 @@ pub async fn update(
 
     let db = db as &DatabaseConnection;
 
+    let user = match User::from_uuid(db, uuid).await? {
+        Some(u) => u,
+        None => return Err(not_found()),
+    };
+
     let user = user::ActiveModel {
-        id: ActiveValue::Set(id),
+        id: ActiveValue::Set(user.id),
         role: ActiveValue::Set(req_user.role.to_owned()),
         firstname: ActiveValue::Set(req_user.firstname.to_owned()),
         lastname: ActiveValue::Set(req_user.lastname.to_owned()),
@@ -156,11 +170,11 @@ pub async fn update(
     success()
 }
 
-#[delete("/<id>")]
+#[delete("/<uuid>")]
 pub async fn delete(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<String, ErrorResponder> {
     if user.role != Role::Admin {
         return Err(admin_required());
@@ -168,7 +182,12 @@ pub async fn delete(
 
     let db = db as &DatabaseConnection;
 
-    User::delete_by_id(id).exec(db).await?;
+    let user = match User::from_uuid(db, uuid).await? {
+        Some(u) => u,
+        None => return Err(not_found()),
+    };
+
+    user.delete(db).await?;
 
     success()
 }
