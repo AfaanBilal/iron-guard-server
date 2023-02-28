@@ -50,7 +50,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(User::UpdatedAt)
                             .timestamp()
-                            .extra("ON UPDATE CURRENT_TIMESTAMP".to_owned()),
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
                     )
                     .col(ColumnDef::new(User::DeletedAt).timestamp().null())
                     .to_owned(),

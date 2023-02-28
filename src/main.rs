@@ -77,3 +77,6 @@ async fn rocket() -> _ {
             ],
         )
 }
+
+#[cfg(test)]
+mod test;
