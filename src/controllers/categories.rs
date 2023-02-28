@@ -1,5 +1,3 @@
-use std::time::SystemTime;
-
 /**
  * Iron Guard Server
  *
@@ -7,6 +5,8 @@ use std::time::SystemTime;
  * @link   https://afaan.dev
  * @link   https://github.com/AfaanBilal/iron-guard
  */
+use std::time::SystemTime;
+
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,

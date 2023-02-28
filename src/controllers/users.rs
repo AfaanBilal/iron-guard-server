@@ -5,13 +5,14 @@
  * @link   https://afaan.dev
  * @link   https://github.com/AfaanBilal/iron-guard
  */
+use std::time::SystemTime;
+
 use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
-use std::time::SystemTime;
 use uuid::Uuid;
 
 use super::{
