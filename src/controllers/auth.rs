@@ -19,9 +19,10 @@ use rocket::{
 use sea_orm::*;
 
 use super::{error_response, success, ErrorResponder};
-use crate::entities::{prelude::*, user};
-
-const JWT_SECRET: &[u8] = b"temp secret";
+use crate::{
+    entities::{prelude::*, user},
+    Config,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Role {
@@ -71,9 +72,11 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         if let Some(token) = req.headers().get_one("token") {
+            let config = req.rocket().state::<Config>().unwrap();
+
             let data = decode::<Claims>(
                 token,
-                &DecodingKey::from_secret(JWT_SECRET),
+                &DecodingKey::from_secret(config.secret.as_bytes()),
                 &Validation::new(Algorithm::HS256),
             );
 
@@ -101,6 +104,7 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 #[post("/sign-in", data = "<req_sign_in>")]
 pub async fn sign_in(
     db: &State<DatabaseConnection>,
+    config: &State<Config>,
     req_sign_in: Json<RequestSignIn<'_>>,
 ) -> Result<Json<ResponseSignIn>, ErrorResponder> {
     let db = db as &DatabaseConnection;
@@ -138,7 +142,7 @@ pub async fn sign_in(
     let token = encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(JWT_SECRET),
+        &EncodingKey::from_secret(config.secret.as_bytes()),
     )
     .unwrap();
 

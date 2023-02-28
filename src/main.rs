@@ -16,6 +16,10 @@ mod db;
 mod entities;
 mod migrator;
 
+pub struct Config {
+    secret: String,
+}
+
 #[get("/")]
 fn index() -> &'static str {
     "Iron Guard"
@@ -49,6 +53,9 @@ async fn rocket() -> _ {
     };
 
     rocket::build()
+        .manage(Config {
+            secret: std::env::var("IRON_GUARD_SECRET").unwrap_or("test".to_string()),
+        })
         .manage(db)
         .register("/", catchers![bad_request, unauthorized, not_found])
         .mount("/", routes![index])
