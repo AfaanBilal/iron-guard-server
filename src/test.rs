@@ -21,6 +21,7 @@ use sea_orm::*;
 use serde_json::json;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 async fn create_test_user() {
     let db = match db::connect().await {
         Ok(db) => db,
@@ -43,6 +44,7 @@ async fn create_test_user() {
     };
 }
 
+#[allow(dead_code)]
 async fn create_test_admin() {
     let db = match db::connect().await {
         Ok(db) => db,
