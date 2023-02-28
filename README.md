@@ -7,6 +7,21 @@
 
 ---
 
+## Configuration
+The following environment variables configure the server.
+
+| Environment Variable    | Default value | Description
+| :---------------------- | :------------ | :-----------
+| IRON_GUARD_SECRET       | `test`        | Set the JWT signing secret. Must be set.
+| IRON_GUARD_DB_TYPE      | `mysql`       | Set the database type. Options: `mysql`.
+| IRON_GUARD_DB_HOST      | `0.0.0.0`     | Server Bind Host.
+| IRON_GUARD_DB_PORT      | `3306`        | Server Port.
+| IRON_GUARD_DB_USERNAME  | `root`        | Set the username. Must be set if authentication is enabled.
+| IRON_GUARD_DB_PASSWORD  | `[blank]`     | Set the password. Must be set if authentication is enabled.
+| IRON_GUARD_DB_DATABASE  | `iron_guard`  | Set the password. Must be set if authentication is enabled.
+
+---
+
 ## Run
 ````
 cargo run
