@@ -12,7 +12,7 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{auth::AuthenticatedUser, success, ErrorResponder, ResponseList, not_found};
+use super::{auth::AuthenticatedUser, not_found, success, ErrorResponder, ResponseList};
 use crate::entities::{item, prelude::*};
 
 #[derive(Deserialize)]
@@ -45,6 +45,15 @@ impl From<item::Model> for ResponseItem {
             description: item.description,
             quantity: item.quantity,
         }
+    }
+}
+
+impl Item {
+    async fn from_uuid(db: &DatabaseConnection, uuid: &str) -> Result<Option<item::Model>, DbErr> {
+        Item::find()
+            .filter(item::Column::Uuid.eq(uuid))
+            .one(db)
+            .await
     }
 }
 
@@ -90,15 +99,15 @@ pub async fn store(
     success()
 }
 
-#[get("/<id>")]
+#[get("/<uuid>")]
 pub async fn show(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<Json<ResponseItem>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let item = match Item::find_by_id(id).one(db).await? {
+    let item = match Item::from_uuid(db, uuid).await? {
         Some(i) => i,
         None => return Err(not_found()),
     };
@@ -106,17 +115,22 @@ pub async fn show(
     Ok(Json(ResponseItem::from(item)))
 }
 
-#[put("/<id>", data = "<req_item>")]
+#[put("/<uuid>", data = "<req_item>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
     req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
+    let item = match Item::from_uuid(db, uuid).await? {
+        Some(i) => i,
+        None => return Err(not_found()),
+    };
+
     let item = item::ActiveModel {
-        id: ActiveValue::Set(id),
+        id: ActiveValue::Set(item.id),
         category_id: ActiveValue::Set(req_item.category_id),
         name: ActiveValue::Set(Some(req_item.name.to_owned())),
         description: ActiveValue::Set(Some(req_item.description.to_owned())),
@@ -129,15 +143,20 @@ pub async fn update(
     success()
 }
 
-#[delete("/<id>")]
+#[delete("/<uuid>")]
 pub async fn delete(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    Item::delete_by_id(id).exec(db).await?;
+    let item = match Item::from_uuid(db, uuid).await? {
+        Some(i) => i,
+        None => return Err(not_found()),
+    };
+
+    item.delete(db).await?;
 
     success()
 }

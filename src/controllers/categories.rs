@@ -12,7 +12,9 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{auth::AuthenticatedUser, items::ResponseItem, success, ErrorResponder, ResponseList, not_found};
+use super::{
+    auth::AuthenticatedUser, items::ResponseItem, not_found, success, ErrorResponder, ResponseList,
+};
 use crate::entities::{category, prelude::*};
 
 #[derive(Deserialize)]
@@ -44,6 +46,18 @@ impl From<category::Model> for ResponseCategory {
             parent_id: category.parent_id,
             items: vec![],
         }
+    }
+}
+
+impl Category {
+    async fn from_uuid(
+        db: &DatabaseConnection,
+        uuid: &str,
+    ) -> Result<Option<category::Model>, DbErr> {
+        Category::find()
+            .filter(category::Column::Uuid.eq(uuid))
+            .one(db)
+            .await
     }
 }
 
@@ -88,15 +102,15 @@ pub async fn store(
     success()
 }
 
-#[get("/<id>")]
+#[get("/<uuid>")]
 pub async fn show(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<Json<ResponseCategory>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let category = match Category::find_by_id(id).one(db).await? {
+    let category = match Category::from_uuid(db, uuid).await? {
         Some(c) => c,
         None => return Err(not_found()),
     };
@@ -115,17 +129,22 @@ pub async fn show(
     Ok(Json(response))
 }
 
-#[put("/<id>", data = "<req_category>")]
+#[put("/<uuid>", data = "<req_category>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
     req_category: Json<RequestCategory<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
+    let category = match Category::from_uuid(db, uuid).await? {
+        Some(c) => c,
+        None => return Err(not_found()),
+    };
+
     let user = category::ActiveModel {
-        id: ActiveValue::Set(id),
+        id: ActiveValue::Set(category.id),
         name: ActiveValue::Set(Some(req_category.name.to_owned())),
         description: ActiveValue::Set(Some(req_category.description.to_owned())),
         parent_id: ActiveValue::Set(req_category.parent_id),
@@ -137,15 +156,20 @@ pub async fn update(
     success()
 }
 
-#[delete("/<id>")]
+#[delete("/<uuid>")]
 pub async fn delete(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
-    id: i32,
+    uuid: &str,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    Category::delete_by_id(id).exec(db).await?;
+    let category = match Category::from_uuid(db, uuid).await? {
+        Some(c) => c,
+        None => return Err(not_found()),
+    };
+
+    category.delete(db).await?;
 
     success()
 }
