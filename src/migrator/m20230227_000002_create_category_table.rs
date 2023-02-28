@@ -7,6 +7,8 @@
  */
 use sea_orm_migration::prelude::*;
 
+use super::m20230227_000001_create_user_table::User;
+
 pub struct Migration;
 
 impl MigrationName for Migration {
@@ -38,6 +40,13 @@ impl MigrationTrait for Migration {
                             .from(Category::Table, Category::ParentId)
                             .to(Category::Table, Category::Id),
                     )
+                    .col(ColumnDef::new(Category::UserId).integer().null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-category-user_id")
+                            .from(Category::Table, Category::UserId)
+                            .to(User::Table, User::Id),
+                    )
                     .col(ColumnDef::new(Category::Name).string())
                     .col(ColumnDef::new(Category::Description).text())
                     .col(ColumnDef::new(Category::Meta).text())
@@ -62,6 +71,7 @@ pub enum Category {
     Id,
     Uuid,
     ParentId,
+    UserId,
     Name,
     Description,
     Meta,

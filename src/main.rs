@@ -8,8 +8,8 @@
 
 #[macro_use]
 extern crate rocket;
-// use migrator::Migrator;
-// use sea_orm_migration::prelude::*;
+use migrator::Migrator;
+use sea_orm_migration::prelude::*;
 
 mod controllers;
 mod db;
@@ -43,10 +43,10 @@ async fn rocket() -> _ {
         Err(err) => panic!("{}", err),
     };
 
-    // match Migrator::refresh(&db).await {
-    //     Err(err) => panic!("{}", err),
-    //     Ok(_) => 0,
-    // };
+    match Migrator::up(&db, None).await {
+        Err(err) => panic!("{}", err),
+        Ok(_) => 0,
+    };
 
     rocket::build()
         .manage(db)
