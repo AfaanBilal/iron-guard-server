@@ -1,5 +1,3 @@
-use std::time::SystemTime;
-
 /**
  * Iron Guard Server
  *
@@ -13,6 +11,7 @@ use rocket::{
     *,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 use super::{
