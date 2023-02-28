@@ -52,10 +52,8 @@ cargo run
 | DELETE | /users/`{uuid}`      | ✅     | `[admin]` Delete the user matching the `uuid`. |
 
 ### Authentication
-- **Generating JWT**: Post to `/auth` with headers `username` and `password`. Returns JWT on success.
-- **All auth required requests**: Add header `Auth` with the JWT as the value.
-- **Token lifetime**: 6 hours.
-- **Token invalid or expired**: `AUTH_FAILED` is returned as response.
+- **All auth required requests**: Add header `token` with the JWT as the value.
+- **Token lifetime**: 4 hours.
 
 ---
 ## Test
