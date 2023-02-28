@@ -43,6 +43,28 @@ async fn create_test_user() {
     };
 }
 
+async fn create_test_admin() {
+    let db = match db::connect().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", err),
+    };
+
+    let new_user = user::ActiveModel {
+        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
+        role: ActiveValue::Set("admin".to_string()),
+        firstname: ActiveValue::Set("Test".to_string()),
+        lastname: ActiveValue::Set("Admin".to_string()),
+        email: ActiveValue::Set("admin@example.com".to_string()),
+        password: ActiveValue::Set(hash("admin1234", DEFAULT_COST).unwrap()),
+        ..Default::default()
+    };
+
+    match User::insert(new_user).exec(&db).await {
+        Err(err) => panic!("{}", err.to_string()),
+        _ => 0,
+    };
+}
+
 #[async_test]
 async fn index() {
     let client = Client::tracked(rocket().await).await.unwrap();
@@ -145,7 +167,7 @@ async fn should_accept_sign_in() {
 
 #[async_test]
 async fn should_403() {
-    // create_test_user();
+    // create_test_user().await;
 
     let client = Client::tracked(rocket().await).await.unwrap();
     let response = client
@@ -168,4 +190,38 @@ async fn should_403() {
         .await;
 
     assert_eq!(response.status(), Status::Forbidden);
+}
+
+#[async_test]
+async fn should_list_users() {
+    // create_test_admin().await;
+
+    let client = Client::tracked(rocket().await).await.unwrap();
+    let response = client
+        .post("/auth/sign-in")
+        .body(json!({"email": "admin@example.com", "password": "admin1234"}).to_string())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::Ok);
+
+    let r = response.into_string().await;
+    assert!(r.is_some());
+    let r = r.unwrap();
+
+    let r: ResponseSignIn = serde_json::from_str(&r).unwrap();
+
+    let response = client
+        .get("/users")
+        .header(Header::new("token", r.token))
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::Ok);
+
+    let r = response.into_string().await;
+    assert!(r.is_some());
+    let r = r.unwrap();
+
+    assert!(r.contains("results"));
 }
