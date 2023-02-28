@@ -1,4 +1,4 @@
-[WIP] Iron Guard Server
+[🚧] Iron Guard Server
 =======================
 
 **Author**: [Afaan Bilal](https://afaan.dev)
