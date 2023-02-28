@@ -28,7 +28,7 @@ fn not_found() -> &'static str {
 
 #[launch]
 async fn rocket() -> _ {
-    let db = match db::set_up_db().await {
+    let db = match db::connect().await {
         Ok(db) => db,
         Err(err) => panic!("{}", err),
     };
