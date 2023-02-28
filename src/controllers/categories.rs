@@ -57,7 +57,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|c| ResponseCategory::from(c))
+        .map(ResponseCategory::from)
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {
@@ -103,7 +103,7 @@ pub async fn show(
         .all(db)
         .await?
         .into_iter()
-        .map(|i| ResponseItem::from(i))
+        .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
     let mut response = ResponseCategory::from(category);

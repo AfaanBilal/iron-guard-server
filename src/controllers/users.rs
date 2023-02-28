@@ -27,11 +27,11 @@ pub struct RequestUser<'r> {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ResponseUser {
-    pub id: i32,
-    pub uuid: String,
-    pub firstname: Option<String>,
-    pub lastname: Option<String>,
-    pub email: Option<String>,
+    id: i32,
+    uuid: String,
+    firstname: Option<String>,
+    lastname: Option<String>,
+    email: Option<String>,
 }
 
 impl From<user::Model> for ResponseUser {
@@ -56,7 +56,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|u| ResponseUser::from(u))
+        .map(ResponseUser::from)
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {

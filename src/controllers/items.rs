@@ -58,7 +58,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|i| ResponseItem::from(i))
+        .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {
