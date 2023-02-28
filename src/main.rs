@@ -8,8 +8,8 @@
 
 #[macro_use]
 extern crate rocket;
-use migrator::Migrator;
-use sea_orm_migration::prelude::*;
+// use migrator::Migrator;
+// use sea_orm_migration::prelude::*;
 
 mod controllers;
 mod db;
@@ -19,6 +19,16 @@ mod migrator;
 #[get("/")]
 fn index() -> &'static str {
     "Iron Guard"
+}
+
+#[catch(400)]
+fn bad_request() -> &'static str {
+    "400 Bad Request"
+}
+
+#[catch(401)]
+fn unauthorized() -> &'static str {
+    "401 Unauthorized"
 }
 
 #[catch(404)]
@@ -33,14 +43,14 @@ async fn rocket() -> _ {
         Err(err) => panic!("{}", err),
     };
 
-    match Migrator::refresh(&db).await {
-        Err(err) => panic!("{}", err),
-        Ok(_) => 0,
-    };
+    // match Migrator::refresh(&db).await {
+    //     Err(err) => panic!("{}", err),
+    //     Ok(_) => 0,
+    // };
 
     rocket::build()
         .manage(db)
-        .register("/", catchers![not_found])
+        .register("/", catchers![bad_request, unauthorized, not_found])
         .mount("/", routes![index])
         .mount(
             "/auth",

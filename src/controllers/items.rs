@@ -12,7 +12,7 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{auth::AuthenticatedUser, success, ErrorResponder, ResponseList};
+use super::{auth::AuthenticatedUser, success, ErrorResponder, ResponseList, not_found};
 use crate::entities::{item, prelude::*};
 
 #[derive(Deserialize)]
@@ -100,7 +100,7 @@ pub async fn show(
 
     let item = match Item::find_by_id(id).one(db).await? {
         Some(i) => i,
-        None => return Err("404".into()),
+        None => return Err(not_found()),
     };
 
     Ok(Json(ResponseItem::from(item)))

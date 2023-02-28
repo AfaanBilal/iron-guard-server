@@ -18,7 +18,7 @@ use rocket::{
 };
 use sea_orm::*;
 
-use super::{success, ErrorResponder};
+use super::{error_response, success, ErrorResponder};
 use crate::entities::{prelude::*, user};
 
 const JWT_SECRET: &[u8] = b"temp secret";
@@ -65,7 +65,7 @@ pub struct AuthenticatedUser {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AuthenticatedUser {
-    type Error = String;
+    type Error = ();
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         if let Some(token) = req.headers().get_one("token") {
@@ -77,7 +77,7 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 
             let claims = match data {
                 Ok(p) => p.claims,
-                Err(_) => return Outcome::Failure((Status::Forbidden, "401".to_owned())),
+                Err(_) => return Outcome::Failure((Status::Unauthorized, ())),
             };
 
             match Role::from_str(&claims.role) {
@@ -85,7 +85,7 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
                 Role::User => Outcome::Success(AuthenticatedUser { role: Role::Admin }),
             }
         } else {
-            Outcome::Failure((Status::Forbidden, "401".to_owned()))
+            Outcome::Failure((Status::Unauthorized, ()))
         }
     }
 }
@@ -102,11 +102,19 @@ pub async fn sign_in(
         .await?
     {
         Some(u) => u,
-        None => return Err("404".into()),
+        None => {
+            return Err(error_response(
+                Status::Unauthorized,
+                "Invalid credentials".to_string(),
+            ))
+        }
     };
 
     if !verify(req_sign_in.password, &u.password).unwrap() {
-        return Err("403".into());
+        return Err(error_response(
+            Status::Unauthorized,
+            "Invalid credentials".to_string(),
+        ));
     }
 
     let claims = Claims {

@@ -12,7 +12,7 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{auth::AuthenticatedUser, items::ResponseItem, success, ErrorResponder, ResponseList};
+use super::{auth::AuthenticatedUser, items::ResponseItem, success, ErrorResponder, ResponseList, not_found};
 use crate::entities::{category, prelude::*};
 
 #[derive(Deserialize)]
@@ -98,7 +98,7 @@ pub async fn show(
 
     let category = match Category::find_by_id(id).one(db).await? {
         Some(c) => c,
-        None => return Err("404".into()),
+        None => return Err(not_found()),
     };
 
     let items = category

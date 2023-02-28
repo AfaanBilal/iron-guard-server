@@ -14,8 +14,9 @@ use sea_orm::*;
 use uuid::Uuid;
 
 use super::{
+    admin_required,
     auth::{AuthenticatedUser, Role},
-    success, ErrorResponder, ResponseList,
+    not_found, success, ErrorResponder, ResponseList,
 };
 use crate::entities::{prelude::*, user};
 
@@ -59,7 +60,7 @@ pub async fn index(
     user: AuthenticatedUser,
 ) -> Result<Json<ResponseList<ResponseUser>>, ErrorResponder> {
     if user.role != Role::Admin {
-        return Err("403 Admin Required".into());
+        return Err(admin_required());
     }
 
     let db = db as &DatabaseConnection;
@@ -84,7 +85,7 @@ pub async fn store(
     req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
     if user.role != Role::Admin {
-        return Err("403 Admin Required".into());
+        return Err(admin_required());
     }
 
     let db = db as &DatabaseConnection;
@@ -111,14 +112,14 @@ pub async fn show(
     id: i32,
 ) -> Result<Json<ResponseUser>, ErrorResponder> {
     if user.role != Role::Admin {
-        return Err("403 Admin Required".into());
+        return Err(admin_required());
     }
 
     let db = db as &DatabaseConnection;
 
     let user = match User::find_by_id(id).one(db).await? {
         Some(u) => u,
-        None => return Err("404".into()),
+        None => return Err(not_found()),
     };
 
     Ok(Json(ResponseUser::from(user)))
@@ -132,7 +133,7 @@ pub async fn update(
     req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
     if user.role != Role::Admin {
-        return Err("403 Admin Required".into());
+        return Err(admin_required());
     }
 
     let db = db as &DatabaseConnection;
@@ -162,7 +163,7 @@ pub async fn delete(
     id: i32,
 ) -> Result<String, ErrorResponder> {
     if user.role != Role::Admin {
-        return Err("403 Admin Required".into());
+        return Err(admin_required());
     }
 
     let db = db as &DatabaseConnection;

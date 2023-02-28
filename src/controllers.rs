@@ -5,7 +5,7 @@
  * @link   https://afaan.dev
  * @link   https://github.com/AfaanBilal/iron-guard
  */
-use rocket::serde::Serialize;
+use rocket::{http::Status, serde::Serialize};
 use sea_orm::DbErr;
 use serde_json::json;
 
@@ -22,31 +22,31 @@ pub struct ResponseList<T> {
 }
 
 #[derive(Responder)]
-#[response(status = 500, content_type = "json")]
-pub struct ErrorResponder {
-    message: String,
+pub enum ErrorResponder {
+    Error((Status, String)),
 }
 
 impl From<DbErr> for ErrorResponder {
-    fn from(err: DbErr) -> ErrorResponder {
-        ErrorResponder {
-            message: err.to_string(),
-        }
-    }
-}
-
-impl From<String> for ErrorResponder {
-    fn from(string: String) -> ErrorResponder {
-        ErrorResponder { message: string }
-    }
-}
-
-impl From<&str> for ErrorResponder {
-    fn from(str: &str) -> ErrorResponder {
-        str.to_owned().into()
+    fn from(err: DbErr) -> Self {
+        ErrorResponder::Error((Status::InternalServerError, err.to_string()))
     }
 }
 
 pub fn success() -> Result<String, ErrorResponder> {
     Ok(json!({ "status": "success" }).to_string())
+}
+
+pub fn error_response(status: Status, message: String) -> ErrorResponder {
+    ErrorResponder::Error((
+        status,
+        json!({ "status": "error", "message": message }).to_string(),
+    ))
+}
+
+pub fn admin_required() -> ErrorResponder {
+    ErrorResponder::Error((Status::Forbidden, "Admin Required".to_string()))
+}
+
+pub fn not_found() -> ErrorResponder {
+    ErrorResponder::Error((Status::NotFound, "Not Found".to_string()))
 }
