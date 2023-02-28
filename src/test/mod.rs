@@ -9,7 +9,7 @@ use super::rocket;
 use crate::{
     controllers::auth::ResponseSignIn,
     db,
-    entities::{prelude::*, user},
+    entities::{category, prelude::*, user},
 };
 use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
@@ -22,6 +22,7 @@ use uuid::Uuid;
 
 pub mod auth_test;
 pub mod user_test;
+pub mod category_test;
 
 #[allow(dead_code)]
 async fn create_test_user() {
@@ -83,6 +84,22 @@ async fn delete_test_user() {
         .unwrap();
 
     user.delete(&db).await.unwrap();
+}
+
+async fn delete_test_category() {
+    let db = match db::connect().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", err),
+    };
+
+    let category = Category::find()
+        .filter(category::Column::Name.eq("test"))
+        .one(&db)
+        .await
+        .unwrap()
+        .unwrap();
+
+    category.delete(&db).await.unwrap();
 }
 
 pub async fn get_client() -> Client {

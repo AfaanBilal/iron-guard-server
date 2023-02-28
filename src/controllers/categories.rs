@@ -23,7 +23,7 @@ use crate::entities::{category, prelude::*};
 #[serde(crate = "rocket::serde")]
 pub struct RequestCategory<'r> {
     name: &'r str,
-    description: &'r str,
+    description: Option<String>,
     parent_id: Option<i32>,
 }
 
@@ -95,7 +95,7 @@ pub async fn store(
         uuid: Set(Uuid::new_v4().to_string()),
         user_id: Set(user.id),
         name: Set(req_category.name.to_owned()),
-        description: Set(Some(req_category.description.to_owned())),
+        description: Set(req_category.description.to_owned()),
         parent_id: Set(req_category.parent_id),
         ..Default::default()
     };
@@ -147,7 +147,7 @@ pub async fn update(
     };
 
     category.name = Set(req_category.name.to_owned());
-    category.description = Set(Some(req_category.description.to_owned()));
+    category.description = Set(req_category.description.to_owned());
     category.parent_id = Set(req_category.parent_id);
 
     category.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
