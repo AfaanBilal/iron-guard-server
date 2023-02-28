@@ -10,6 +10,7 @@ use crate::{
     controllers::auth::ResponseSignIn,
     db,
     entities::{category, item, prelude::*, user},
+    Config,
 };
 use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
@@ -25,12 +26,18 @@ pub mod category_test;
 pub mod item_test;
 pub mod user_test;
 
-#[allow(dead_code)]
-async fn create_test_user() {
-    let db = match db::connect().await {
+async fn get_db() -> DatabaseConnection {
+    let db = match db::connect(&Config::new()).await {
         Ok(db) => db,
         Err(err) => panic!("{}", err),
     };
+
+    db
+}
+
+#[allow(dead_code)]
+async fn create_test_user() {
+    let db = get_db().await;
 
     let new_user = user::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
@@ -50,10 +57,7 @@ async fn create_test_user() {
 
 #[allow(dead_code)]
 async fn create_test_admin() {
-    let db = match db::connect().await {
-        Ok(db) => db,
-        Err(err) => panic!("{}", err),
-    };
+    let db = get_db().await;
 
     let new_user = user::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
@@ -72,10 +76,7 @@ async fn create_test_admin() {
 }
 
 async fn delete_test_user() {
-    let db = match db::connect().await {
-        Ok(db) => db,
-        Err(err) => panic!("{}", err),
-    };
+    let db = get_db().await;
 
     let user = User::find()
         .filter(user::Column::Email.eq("test@example.net"))
@@ -88,10 +89,7 @@ async fn delete_test_user() {
 }
 
 async fn delete_test_category() {
-    let db = match db::connect().await {
-        Ok(db) => db,
-        Err(err) => panic!("{}", err),
-    };
+    let db = get_db().await;
 
     let category = Category::find()
         .filter(category::Column::Name.eq("test"))
@@ -104,10 +102,7 @@ async fn delete_test_category() {
 }
 
 async fn delete_test_item() {
-    let db = match db::connect().await {
-        Ok(db) => db,
-        Err(err) => panic!("{}", err),
-    };
+    let db = get_db().await;
 
     let item = Item::find()
         .filter(item::Column::Name.eq("test"))

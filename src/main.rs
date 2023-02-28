@@ -18,6 +18,27 @@ mod migrator;
 
 pub struct Config {
     secret: String,
+    db_type: String,
+    db_host: String,
+    db_port: String,
+    db_username: String,
+    db_password: String,
+    db_database: String,
+}
+
+impl Config {
+    pub fn new() -> Config {
+        Config {
+            secret: std::env::var("IRON_GUARD_SECRET").unwrap_or("test".to_string()),
+            db_type: std::env::var("IRON_GUARD_DB_TYPE").unwrap_or("mysql".to_string()),
+            db_host: std::env::var("IRON_GUARD_DB_HOST").unwrap_or("localhost".to_string()),
+            db_port: std::env::var("IRON_GUARD_DB_PORT").unwrap_or("3306".to_string()),
+            db_username: std::env::var("IRON_GUARD_DB_USERNAME").unwrap_or("root".to_string()),
+            db_password: std::env::var("IRON_GUARD_DB_PASSWORD").unwrap_or("".to_string()),
+            db_database: std::env::var("IRON_GUARD_DB_DATABASE")
+                .unwrap_or("iron_guard".to_string()),
+        }
+    }
 }
 
 #[get("/")]
@@ -42,7 +63,9 @@ fn not_found() -> &'static str {
 
 #[launch]
 async fn rocket() -> _ {
-    let db = match db::connect().await {
+    let config = Config::new();
+
+    let db = match db::connect(&config).await {
         Ok(db) => db,
         Err(err) => panic!("{}", err),
     };
@@ -53,9 +76,7 @@ async fn rocket() -> _ {
     };
 
     rocket::build()
-        .manage(Config {
-            secret: std::env::var("IRON_GUARD_SECRET").unwrap_or("test".to_string()),
-        })
+        .manage(config)
         .manage(db)
         .register("/", catchers![bad_request, unauthorized, not_found])
         .mount("/", routes![index])

@@ -7,9 +7,20 @@
  */
 use sea_orm::*;
 
-const DATABASE_URL: &str = "mysql://root:@localhost:3306";
-const DB_NAME: &str = "iron_guard";
+use crate::Config;
 
-pub(super) async fn connect() -> Result<DatabaseConnection, DbErr> {
-    Database::connect(format!("{}/{}", DATABASE_URL, DB_NAME)).await
+pub(super) async fn connect(config: &Config) -> Result<DatabaseConnection, DbErr> {
+    let mut opts = ConnectOptions::new(format!(
+        "{}://{}:{}@{}:{}/{}",
+        config.db_type,
+        config.db_username,
+        config.db_password,
+        config.db_host,
+        config.db_port,
+        config.db_database
+    ));
+
+    opts.sqlx_logging(false);
+
+    Database::connect(opts).await
 }
