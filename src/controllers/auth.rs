@@ -10,10 +10,10 @@ use crate::ErrorResponder;
 
 #[post("/sign-in")]
 pub async fn sign_in() -> Result<String, ErrorResponder> {
-    Ok(success())
+    success()
 }
 
 #[post("/sign-out")]
 pub async fn sign_out() -> Result<String, ErrorResponder> {
-    Ok(success())
+    success()
 }

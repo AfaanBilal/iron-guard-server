@@ -6,11 +6,10 @@
  * @link   https://github.com/AfaanBilal/iron-guard
  */
 use rocket::{
-    serde::{json::Json, Deserialize},
+    serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
-use serde_json::json;
+use sea_orm::*;
 use uuid::Uuid;
 
 use crate::{
@@ -18,35 +17,56 @@ use crate::{
     ErrorResponder,
 };
 
-use super::success;
+use super::{success, ResponseList};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct ReqUser<'r> {
+pub struct RequestUser<'r> {
     firstname: &'r str,
     lastname: &'r str,
     email: &'r str,
     password: &'r str,
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ResponseUser {
+    pub id: i32,
+    pub uuid: String,
+    pub firstname: Option<String>,
+    pub lastname: Option<String>,
+    pub email: Option<String>,
+}
+
 #[get("/")]
-pub async fn index(db: &State<DatabaseConnection>) -> Result<String, ErrorResponder> {
+pub async fn index(
+    db: &State<DatabaseConnection>,
+) -> Result<Json<ResponseList<ResponseUser>>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let users = User::find()
         .all(db)
         .await?
         .into_iter()
-        .map(|u| json!({ "uuid": u.uuid, "id": u.id, "firstname": u.firstname }))
+        .map(|u| ResponseUser {
+            id: u.id,
+            uuid: u.uuid,
+            firstname: u.firstname,
+            lastname: u.lastname,
+            email: u.email,
+        })
         .collect::<Vec<_>>();
 
-    Ok(json!({ "users": users, "total": users.len() }).to_string())
+    Ok(Json(ResponseList {
+        total: users.len(),
+        results: users,
+    }))
 }
 
 #[post("/", data = "<req_user>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
-    req_user: Json<ReqUser<'_>>,
+    req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -61,30 +81,35 @@ pub async fn store(
 
     User::insert(new_user).exec(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[get("/<id>")]
-pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, ErrorResponder> {
+pub async fn show(
+    db: &State<DatabaseConnection>,
+    id: i32,
+) -> Result<Json<ResponseUser>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let user = User::find_by_id(id).one(db).await?;
+    let user = match User::find_by_id(id).one(db).await? {
+        Some(u) => u,
+        None => return Err("404".into()),
+    };
 
-    if let Some(user) = user {
-        Ok(
-            json!({ "id": user.id, "firstname": user.firstname, "lastname": user.lastname })
-                .to_string(),
-        )
-    } else {
-        Err(format!("404 No user found.").into())
-    }
+    Ok(Json(ResponseUser {
+        id: user.id,
+        uuid: user.uuid,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+    }))
 }
 
 #[put("/<id>", data = "<req_user>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     id: i32,
-    req_user: Json<ReqUser<'_>>,
+    req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -99,7 +124,7 @@ pub async fn update(
 
     user.update(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[delete("/<id>")]
@@ -108,5 +133,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     User::delete_by_id(id).exec(db).await?;
 
-    Ok(success())
+    success()
 }

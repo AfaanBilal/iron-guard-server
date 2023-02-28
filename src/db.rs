@@ -11,5 +11,5 @@ const DATABASE_URL: &str = "mysql://root:@localhost:3306";
 const DB_NAME: &str = "iron_guard";
 
 pub(super) async fn set_up_db() -> Result<DatabaseConnection, DbErr> {
-    Ok(Database::connect(format!("{}/{}", DATABASE_URL, DB_NAME)).await?)
+    Database::connect(format!("{}/{}", DATABASE_URL, DB_NAME)).await
 }

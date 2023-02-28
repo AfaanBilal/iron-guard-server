@@ -6,11 +6,10 @@
  * @link   https://github.com/AfaanBilal/iron-guard
  */
 use rocket::{
-    serde::{json::Json, Deserialize},
+    serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
-use serde_json::json;
+use sea_orm::*;
 use uuid::Uuid;
 
 use crate::{
@@ -18,34 +17,57 @@ use crate::{
     ErrorResponder,
 };
 
-use super::success;
+use super::{items::ResponseItem, success, ResponseList};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct ReqCategory<'r> {
+pub struct RequestCategory<'r> {
     name: &'r str,
     description: &'r str,
     parent_id: Option<i32>,
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ResponseCategory {
+    id: i32,
+    uuid: String,
+    name: Option<String>,
+    description: Option<String>,
+    parent_id: Option<i32>,
+    items: Vec<ResponseItem>,
+}
+
 #[get("/")]
-pub async fn index(db: &State<DatabaseConnection>) -> Result<String, ErrorResponder> {
+pub async fn index(
+    db: &State<DatabaseConnection>,
+) -> Result<Json<ResponseList<ResponseCategory>>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let categories = Category::find()
         .all(db)
         .await?
         .into_iter()
-        .map(|c| json!({ "id": c.id, "name": c.name }))
+        .map(|c| ResponseCategory {
+            id: c.id,
+            uuid: c.uuid,
+            name: c.name,
+            description: c.description,
+            parent_id: c.parent_id,
+            items: vec![],
+        })
         .collect::<Vec<_>>();
 
-    Ok(json!({ "categories": categories, "total": categories.len() }).to_string())
+    Ok(Json(ResponseList {
+        total: categories.len(),
+        results: categories,
+    }))
 }
 
 #[post("/", data = "<req_category>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
-    req_category: Json<ReqCategory<'_>>,
+    req_category: Json<RequestCategory<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -59,27 +81,51 @@ pub async fn store(
 
     Category::insert(new_category).exec(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[get("/<id>")]
-pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, ErrorResponder> {
+pub async fn show(
+    db: &State<DatabaseConnection>,
+    id: i32,
+) -> Result<Json<ResponseCategory>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let category = Category::find_by_id(id).one(db).await?;
+    let category = match Category::find_by_id(id).one(db).await? {
+        Some(c) => c,
+        None => return Err("404".into()),
+    };
 
-    if let Some(category) = category {
-        Ok(json!({ "id": category.id, "name": category.name }).to_string())
-    } else {
-        Err(format!("404 No category found.").into())
-    }
+    let items = category
+        .find_related(Item)
+        .all(db)
+        .await?
+        .into_iter()
+        .map(|i| ResponseItem {
+            id: i.id,
+            uuid: i.uuid,
+            category_id: i.category_id,
+            name: i.name,
+            description: i.description,
+            quantity: i.quantity,
+        })
+        .collect::<Vec<_>>();
+
+    Ok(Json(ResponseCategory {
+        id: category.id,
+        uuid: category.uuid,
+        name: category.name,
+        description: category.description,
+        parent_id: category.parent_id,
+        items,
+    }))
 }
 
 #[put("/<id>", data = "<req_category>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     id: i32,
-    req_category: Json<ReqCategory<'_>>,
+    req_category: Json<RequestCategory<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -93,7 +139,7 @@ pub async fn update(
 
     user.update(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[delete("/<id>")]
@@ -102,5 +148,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     Category::delete_by_id(id).exec(db).await?;
 
-    Ok(success())
+    success()
 }

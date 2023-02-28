@@ -1,3 +1,4 @@
+use rocket::serde::Serialize;
 /**
  * Iron Guard Server
  *
@@ -7,11 +8,20 @@
  */
 use serde_json::json;
 
+use crate::ErrorResponder;
+
 pub mod auth;
 pub mod categories;
 pub mod items;
 pub mod users;
 
-pub fn success() -> String {
-    json!({ "status": "success" }).to_string()
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ResponseList<T> {
+    total: usize,
+    results: Vec<T>,
+}
+
+pub fn success() -> Result<String, ErrorResponder> {
+    Ok(json!({ "status": "success" }).to_string())
 }

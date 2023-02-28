@@ -46,6 +46,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Item::Quantity)
                             .integer()
                             .unsigned()
+                            .not_null()
                             .default(0),
                     )
                     .col(ColumnDef::new(Item::Meta).text())

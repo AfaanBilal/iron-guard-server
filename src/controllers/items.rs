@@ -6,11 +6,10 @@
  * @link   https://github.com/AfaanBilal/iron-guard
  */
 use rocket::{
-    serde::{json::Json, Deserialize},
+    serde::{json::Json, Deserialize, Serialize},
     *,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
-use serde_json::json;
+use sea_orm::*;
 use uuid::Uuid;
 
 use crate::{
@@ -18,35 +17,58 @@ use crate::{
     ErrorResponder,
 };
 
-use super::success;
+use super::{success, ResponseList};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct ReqItem<'r> {
+pub struct RequestItem<'r> {
     category_id: Option<i32>,
     name: &'r str,
     description: &'r str,
     quantity: u32,
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ResponseItem {
+    pub id: i32,
+    pub uuid: String,
+    pub category_id: Option<i32>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub quantity: u32,
+}
+
 #[get("/")]
-pub async fn index(db: &State<DatabaseConnection>) -> Result<String, ErrorResponder> {
+pub async fn index(
+    db: &State<DatabaseConnection>,
+) -> Result<Json<ResponseList<ResponseItem>>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let items = Item::find()
         .all(db)
         .await?
         .into_iter()
-        .map(|i| json!({ "id": i.id, "name": i.name, "quantity": i.quantity }))
+        .map(|i| ResponseItem {
+            id: i.id,
+            uuid: i.uuid,
+            category_id: i.category_id,
+            name: i.name,
+            description: i.description,
+            quantity: i.quantity,
+        })
         .collect::<Vec<_>>();
 
-    Ok(json!({ "items": items, "total": items.len() }).to_string())
+    Ok(Json(ResponseList {
+        total: items.len(),
+        results: items,
+    }))
 }
 
 #[post("/", data = "<req_item>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
-    req_item: Json<ReqItem<'_>>,
+    req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -55,33 +77,42 @@ pub async fn store(
         category_id: ActiveValue::Set(req_item.category_id),
         name: ActiveValue::Set(Some(req_item.name.to_owned())),
         description: ActiveValue::Set(Some(req_item.description.to_owned())),
-        quantity: ActiveValue::Set(Some(req_item.quantity)),
+        quantity: ActiveValue::Set(req_item.quantity),
         ..Default::default()
     };
 
     Item::insert(new_item).exec(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[get("/<id>")]
-pub async fn show(db: &State<DatabaseConnection>, id: i32) -> Result<String, ErrorResponder> {
+pub async fn show(
+    db: &State<DatabaseConnection>,
+    id: i32,
+) -> Result<Json<ResponseItem>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let item = Item::find_by_id(id).one(db).await?;
+    let item = match Item::find_by_id(id).one(db).await? {
+        Some(i) => i,
+        None => return Err("404".into()),
+    };
 
-    if let Some(item) = item {
-        Ok(json!({ "id": item.id, "name": item.name }).to_string())
-    } else {
-        Err(format!("404 No item found.").into())
-    }
+    Ok(Json(ResponseItem {
+        id: item.id,
+        uuid: item.uuid,
+        category_id: item.category_id,
+        name: item.name,
+        description: item.description,
+        quantity: item.quantity,
+    }))
 }
 
 #[put("/<id>", data = "<req_item>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
     id: i32,
-    req_item: Json<ReqItem<'_>>,
+    req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -90,13 +121,13 @@ pub async fn update(
         category_id: ActiveValue::Set(req_item.category_id),
         name: ActiveValue::Set(Some(req_item.name.to_owned())),
         description: ActiveValue::Set(Some(req_item.description.to_owned())),
-        quantity: ActiveValue::Set(Some(req_item.quantity)),
+        quantity: ActiveValue::Set(req_item.quantity),
         ..Default::default()
     };
 
     item.update(db).await?;
 
-    Ok(success())
+    success()
 }
 
 #[delete("/<id>")]
@@ -105,5 +136,5 @@ pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, E
 
     Item::delete_by_id(id).exec(db).await?;
 
-    Ok(success())
+    success()
 }

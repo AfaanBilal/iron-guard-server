@@ -13,7 +13,7 @@ pub struct Model {
     pub name: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    pub quantity: Option<u32>,
+    pub quantity: u32,
     #[sea_orm(column_type = "Text", nullable)]
     pub meta: Option<String>,
     pub created_at: Option<DateTimeUtc>,
