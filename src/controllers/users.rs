@@ -5,6 +5,7 @@
  * @link   https://afaan.dev
  * @link   https://github.com/AfaanBilal/iron-guard
  */
+use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
     *,
@@ -12,12 +13,16 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{success, ErrorResponder, ResponseList};
+use super::{
+    auth::{AuthenticatedUser, Role},
+    success, ErrorResponder, ResponseList,
+};
 use crate::entities::{prelude::*, user};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct RequestUser<'r> {
+    role: &'r str,
     firstname: &'r str,
     lastname: &'r str,
     email: &'r str,
@@ -29,9 +34,10 @@ pub struct RequestUser<'r> {
 pub struct ResponseUser {
     id: i32,
     uuid: String,
-    firstname: Option<String>,
-    lastname: Option<String>,
-    email: Option<String>,
+    role: String,
+    firstname: String,
+    lastname: String,
+    email: String,
 }
 
 impl From<user::Model> for ResponseUser {
@@ -39,6 +45,7 @@ impl From<user::Model> for ResponseUser {
         ResponseUser {
             id: user.id,
             uuid: user.uuid,
+            role: user.role,
             firstname: user.firstname,
             lastname: user.lastname,
             email: user.email,
@@ -49,7 +56,12 @@ impl From<user::Model> for ResponseUser {
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
 ) -> Result<Json<ResponseList<ResponseUser>>, ErrorResponder> {
+    if user.role != Role::Admin {
+        return Err("403 Admin Required".into());
+    }
+
     let db = db as &DatabaseConnection;
 
     let users = User::find()
@@ -68,16 +80,22 @@ pub async fn index(
 #[post("/", data = "<req_user>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
     req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
+    if user.role != Role::Admin {
+        return Err("403 Admin Required".into());
+    }
+
     let db = db as &DatabaseConnection;
 
     let new_user = user::ActiveModel {
         uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        firstname: ActiveValue::Set(Some(req_user.firstname.to_owned())),
-        lastname: ActiveValue::Set(Some(req_user.lastname.to_owned())),
-        email: ActiveValue::Set(Some(req_user.email.to_owned())),
-        password: ActiveValue::Set(Some(req_user.password.to_owned())),
+        role: ActiveValue::Set(req_user.role.to_owned()),
+        firstname: ActiveValue::Set(req_user.firstname.to_owned()),
+        lastname: ActiveValue::Set(req_user.lastname.to_owned()),
+        email: ActiveValue::Set(req_user.email.to_owned()),
+        password: ActiveValue::Set(hash(req_user.password, DEFAULT_COST).unwrap()),
         ..Default::default()
     };
 
@@ -89,8 +107,13 @@ pub async fn store(
 #[get("/<id>")]
 pub async fn show(
     db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
     id: i32,
 ) -> Result<Json<ResponseUser>, ErrorResponder> {
+    if user.role != Role::Admin {
+        return Err("403 Admin Required".into());
+    }
+
     let db = db as &DatabaseConnection;
 
     let user = match User::find_by_id(id).one(db).await? {
@@ -104,17 +127,26 @@ pub async fn show(
 #[put("/<id>", data = "<req_user>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
     id: i32,
     req_user: Json<RequestUser<'_>>,
 ) -> Result<String, ErrorResponder> {
+    if user.role != Role::Admin {
+        return Err("403 Admin Required".into());
+    }
+
     let db = db as &DatabaseConnection;
 
     let user = user::ActiveModel {
         id: ActiveValue::Set(id),
-        firstname: ActiveValue::Set(Some(req_user.firstname.to_owned())),
-        lastname: ActiveValue::Set(Some(req_user.lastname.to_owned())),
-        email: ActiveValue::Set(Some(req_user.email.to_owned())),
-        password: ActiveValue::Set(Some(req_user.password.to_owned())),
+        role: ActiveValue::Set(req_user.role.to_owned()),
+        firstname: ActiveValue::Set(req_user.firstname.to_owned()),
+        lastname: ActiveValue::Set(req_user.lastname.to_owned()),
+        email: ActiveValue::Set(req_user.email.to_owned()),
+        password: match req_user.password {
+            "" => ActiveValue::NotSet,
+            _ => ActiveValue::Set(hash(req_user.password, DEFAULT_COST).unwrap()),
+        },
         ..Default::default()
     };
 
@@ -124,7 +156,15 @@ pub async fn update(
 }
 
 #[delete("/<id>")]
-pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, ErrorResponder> {
+pub async fn delete(
+    db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
+    id: i32,
+) -> Result<String, ErrorResponder> {
+    if user.role != Role::Admin {
+        return Err("403 Admin Required".into());
+    }
+
     let db = db as &DatabaseConnection;
 
     User::delete_by_id(id).exec(db).await?;

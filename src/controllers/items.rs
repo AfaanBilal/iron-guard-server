@@ -12,7 +12,7 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use super::{success, ErrorResponder, ResponseList};
+use super::{auth::AuthenticatedUser, success, ErrorResponder, ResponseList};
 use crate::entities::{item, prelude::*};
 
 #[derive(Deserialize)]
@@ -51,6 +51,7 @@ impl From<item::Model> for ResponseItem {
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
+    _user: AuthenticatedUser,
 ) -> Result<Json<ResponseList<ResponseItem>>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -70,6 +71,7 @@ pub async fn index(
 #[post("/", data = "<req_item>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
+    _user: AuthenticatedUser,
     req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
@@ -91,6 +93,7 @@ pub async fn store(
 #[get("/<id>")]
 pub async fn show(
     db: &State<DatabaseConnection>,
+    _user: AuthenticatedUser,
     id: i32,
 ) -> Result<Json<ResponseItem>, ErrorResponder> {
     let db = db as &DatabaseConnection;
@@ -106,6 +109,7 @@ pub async fn show(
 #[put("/<id>", data = "<req_item>")]
 pub async fn update(
     db: &State<DatabaseConnection>,
+    _user: AuthenticatedUser,
     id: i32,
     req_item: Json<RequestItem<'_>>,
 ) -> Result<String, ErrorResponder> {
@@ -126,7 +130,11 @@ pub async fn update(
 }
 
 #[delete("/<id>")]
-pub async fn delete(db: &State<DatabaseConnection>, id: i32) -> Result<String, ErrorResponder> {
+pub async fn delete(
+    db: &State<DatabaseConnection>,
+    _user: AuthenticatedUser,
+    id: i32,
+) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     Item::delete_by_id(id).exec(db).await?;

@@ -9,14 +9,15 @@ pub struct Model {
     pub id: i32,
     #[sea_orm(unique)]
     pub uuid: String,
-    pub firstname: Option<String>,
-    pub lastname: Option<String>,
-    pub email: Option<String>,
-    pub password: Option<String>,
+    pub role: String,
+    pub firstname: String,
+    pub lastname: String,
+    pub email: String,
+    pub password: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub meta: Option<String>,
-    pub created_at: Option<DateTimeUtc>,
-    pub updated_at: Option<DateTimeUtc>,
+    pub created_at: DateTimeUtc,
+    pub updated_at: DateTimeUtc,
     pub deleted_at: Option<DateTimeUtc>,
 }
 

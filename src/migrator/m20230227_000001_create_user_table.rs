@@ -31,13 +31,27 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(User::Uuid).string().unique_key().not_null())
-                    .col(ColumnDef::new(User::Firstname).string())
-                    .col(ColumnDef::new(User::Lastname).string())
-                    .col(ColumnDef::new(User::Email).string())
-                    .col(ColumnDef::new(User::Password).string())
+                    .col(
+                        ColumnDef::new(User::Role)
+                            .string()
+                            .not_null()
+                            .default("user"),
+                    )
+                    .col(ColumnDef::new(User::Firstname).string().not_null())
+                    .col(ColumnDef::new(User::Lastname).string().not_null())
+                    .col(ColumnDef::new(User::Email).string().unique_key().not_null())
+                    .col(ColumnDef::new(User::Password).string().not_null())
                     .col(ColumnDef::new(User::Meta).text())
-                    .col(ColumnDef::new(User::CreatedAt).timestamp().null())
-                    .col(ColumnDef::new(User::UpdatedAt).timestamp().null())
+                    .col(
+                        ColumnDef::new(User::CreatedAt)
+                            .timestamp()
+                            .extra("DEFAULT CURRENT_TIMESTAMP".to_owned()),
+                    )
+                    .col(
+                        ColumnDef::new(User::UpdatedAt)
+                            .timestamp()
+                            .extra("ON UPDATE CURRENT_TIMESTAMP".to_owned()),
+                    )
                     .col(ColumnDef::new(User::DeletedAt).timestamp().null())
                     .to_owned(),
             )
@@ -56,6 +70,7 @@ pub enum User {
     Table,
     Id,
     Uuid,
+    Role,
     Firstname,
     Lastname,
     Email,
