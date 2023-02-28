@@ -16,7 +16,6 @@ use rocket::{
     http::{Header, Status},
     local::asynchronous::Client,
 };
-use sea_orm::ActiveValue;
 use sea_orm::*;
 use serde_json::json;
 use uuid::Uuid;
@@ -32,12 +31,12 @@ async fn create_test_user() {
     };
 
     let new_user = user::ActiveModel {
-        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        role: ActiveValue::Set("user".to_string()),
-        firstname: ActiveValue::Set("Test".to_string()),
-        lastname: ActiveValue::Set("User".to_string()),
-        email: ActiveValue::Set("user@example.com".to_string()),
-        password: ActiveValue::Set(hash("test1234", DEFAULT_COST).unwrap()),
+        uuid: Set(Uuid::new_v4().to_string()),
+        role: Set("user".to_string()),
+        firstname: Set("Test".to_string()),
+        lastname: Set("User".to_string()),
+        email: Set("user@example.com".to_string()),
+        password: Set(hash("test1234", DEFAULT_COST).unwrap()),
         ..Default::default()
     };
 
@@ -55,12 +54,12 @@ async fn create_test_admin() {
     };
 
     let new_user = user::ActiveModel {
-        uuid: ActiveValue::Set(Uuid::new_v4().to_string()),
-        role: ActiveValue::Set("admin".to_string()),
-        firstname: ActiveValue::Set("Test".to_string()),
-        lastname: ActiveValue::Set("Admin".to_string()),
-        email: ActiveValue::Set("admin@example.com".to_string()),
-        password: ActiveValue::Set(hash("admin1234", DEFAULT_COST).unwrap()),
+        uuid: Set(Uuid::new_v4().to_string()),
+        role: Set("admin".to_string()),
+        firstname: Set("Test".to_string()),
+        lastname: Set("Admin".to_string()),
+        email: Set("admin@example.com".to_string()),
+        password: Set(hash("admin1234", DEFAULT_COST).unwrap()),
         ..Default::default()
     };
 
