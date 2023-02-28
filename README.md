@@ -13,12 +13,14 @@ The following environment variables configure the server.
 | Environment Variable   | Default value | Description                          |
 | :--------------------- | :------------ | :----------------------------------- |
 | IRON_GUARD_SECRET      | `test`        | The JWT signing secret. Must be set. |
-| IRON_GUARD_DB_TYPE     | `mysql`       | Database type. Options: `mysql`.     |
-| IRON_GUARD_DB_HOST     | `0.0.0.0`     | Database host.                       |
-| IRON_GUARD_DB_PORT     | `3306`        | Database port.                       |
-| IRON_GUARD_DB_USERNAME | `root`        | Database username.                   |
-| IRON_GUARD_DB_PASSWORD | `[blank]`     | Database password.                   |
-| IRON_GUARD_DB_DATABASE | `iron_guard`  | Database name.                       |
+| IRON_GUARD_DB_TYPE     | `mysql`       | Database Type. Options: `mysql`.     |
+| IRON_GUARD_DB_HOST     | `localhost`   | Database Host                        |
+| IRON_GUARD_DB_PORT     | `3306`        | Database Port                        |
+| IRON_GUARD_DB_USERNAME | `root`        | Database Username                    |
+| IRON_GUARD_DB_PASSWORD | `[blank]`     | Database Password                    |
+| IRON_GUARD_DB_DATABASE | `iron_guard`  | Database Name                        |
+| ROCKET_ADDRESS         | `0.0.0.0`     | HTTP Server Bind Address             |
+| ROCKET_PORT            | `8000`        | HTTP Server Port                     |
 
 ---
 
