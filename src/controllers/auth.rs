@@ -23,7 +23,7 @@ use crate::entities::{prelude::*, user};
 
 const JWT_SECRET: &[u8] = b"temp secret";
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Role {
     User,
     Admin,
@@ -53,10 +53,11 @@ pub struct RequestSignIn<'r> {
     password: &'r str,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ResponseSignIn {
-    token: String,
+    pub status: String,
+    pub token: String,
 }
 
 pub struct AuthenticatedUser {
@@ -81,8 +82,8 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
             };
 
             match Role::from_str(&claims.role) {
+                Role::User => Outcome::Success(AuthenticatedUser { role: Role::User }),
                 Role::Admin => Outcome::Success(AuthenticatedUser { role: Role::Admin }),
-                Role::User => Outcome::Success(AuthenticatedUser { role: Role::Admin }),
             }
         } else {
             Outcome::Failure((Status::Unauthorized, ()))
@@ -134,7 +135,10 @@ pub async fn sign_in(
     )
     .unwrap();
 
-    Ok(Json(ResponseSignIn { token }))
+    Ok(Json(ResponseSignIn {
+        status: "success".to_string(),
+        token,
+    }))
 }
 
 #[post("/sign-out")]
