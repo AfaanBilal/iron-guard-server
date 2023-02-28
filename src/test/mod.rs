@@ -67,6 +67,47 @@ async fn create_test_admin() {
     };
 }
 
+async fn delete_test_user() {
+    let db = match db::connect().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", err),
+    };
+
+    let user = User::find()
+        .filter(user::Column::Email.eq("test@example.net"))
+        .one(&db)
+        .await
+        .unwrap()
+        .unwrap();
+
+    user.delete(&db).await.unwrap();
+}
+
+async fn get_token(admin: bool) -> String {
+    let client = Client::tracked(rocket().await).await.unwrap();
+
+    let mut body = json!({"email": "user@example.com", "password": "test1234"});
+    if admin {
+        body = json!({"email": "admin@example.com", "password": "admin1234"});
+    }
+
+    let response = client
+        .post("/auth/sign-in")
+        .body(body.to_string())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::Ok);
+
+    let r = response.into_string().await;
+    assert!(r.is_some());
+    let r = r.unwrap();
+
+    let r: ResponseSignIn = serde_json::from_str(&r).unwrap();
+
+    r.token
+}
+
 #[async_test]
 async fn index() {
     let client = Client::tracked(rocket().await).await.unwrap();
@@ -171,23 +212,12 @@ async fn should_accept_sign_in() {
 async fn should_403() {
     // create_test_user().await;
 
+    let token = get_token(false).await;
     let client = Client::tracked(rocket().await).await.unwrap();
-    let response = client
-        .post("/auth/sign-in")
-        .body(json!({"email": "user@example.com", "password": "test1234"}).to_string())
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let r = response.into_string().await;
-    assert!(r.is_some());
-    let r = r.unwrap();
-
-    let r: ResponseSignIn = serde_json::from_str(&r).unwrap();
 
     let response = client
         .get("/users")
-        .header(Header::new("token", r.token))
+        .header(Header::new("token", token))
         .dispatch()
         .await;
 
@@ -198,24 +228,12 @@ async fn should_403() {
 async fn should_list_users() {
     // create_test_admin().await;
 
+    let token = get_token(true).await;
     let client = Client::tracked(rocket().await).await.unwrap();
-    let response = client
-        .post("/auth/sign-in")
-        .body(json!({"email": "admin@example.com", "password": "admin1234"}).to_string())
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-
-    let r = response.into_string().await;
-    assert!(r.is_some());
-    let r = r.unwrap();
-
-    let r: ResponseSignIn = serde_json::from_str(&r).unwrap();
 
     let response = client
         .get("/users")
-        .header(Header::new("token", r.token))
+        .header(Header::new("token", token))
         .dispatch()
         .await;
 
@@ -226,4 +244,36 @@ async fn should_list_users() {
     let r = r.unwrap();
 
     assert!(r.contains("results"));
+}
+
+#[async_test]
+async fn should_not_add_user() {
+    let token = get_token(true).await;
+    let client = Client::tracked(rocket().await).await.unwrap();
+
+    let response = client
+        .post("/users")
+        .header(Header::new("token", token))
+        .body(json!({ "email": "test@example.net" }).to_string())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+}
+
+#[async_test]
+async fn should_add_user() {
+    let token = get_token(true).await;
+    let client = Client::tracked(rocket().await).await.unwrap();
+
+    let response = client
+        .post("/users")
+        .header(Header::new("token", token))
+        .body(json!({ "email": "test@example.net", "password": "test-password", "firstname": "Test A", "lastname": "User", "role": "user" }).to_string())
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::Ok);
+
+    delete_test_user().await;
 }
