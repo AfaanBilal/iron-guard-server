@@ -44,10 +44,7 @@ async fn rocket() -> _ {
         .mount("/", routes![index])
         .mount(
             "/auth",
-            routes![
-                controllers::auth::sign_in,
-                controllers::auth::sign_out,
-            ],
+            routes![controllers::auth::sign_in, controllers::auth::sign_out,],
         )
         .mount(
             "/users",
@@ -79,30 +76,4 @@ async fn rocket() -> _ {
                 controllers::items::delete
             ],
         )
-}
-
-#[derive(Responder)]
-#[response(status = 500, content_type = "json")]
-pub struct ErrorResponder {
-    message: String,
-}
-
-impl From<DbErr> for ErrorResponder {
-    fn from(err: DbErr) -> ErrorResponder {
-        ErrorResponder {
-            message: err.to_string(),
-        }
-    }
-}
-
-impl From<String> for ErrorResponder {
-    fn from(string: String) -> ErrorResponder {
-        ErrorResponder { message: string }
-    }
-}
-
-impl From<&str> for ErrorResponder {
-    fn from(str: &str) -> ErrorResponder {
-        str.to_owned().into()
-    }
 }

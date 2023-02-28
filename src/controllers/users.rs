@@ -12,12 +12,8 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use crate::{
-    entities::{prelude::*, user},
-    ErrorResponder,
-};
-
-use super::{success, ResponseList};
+use super::{success, ErrorResponder, ResponseList};
+use crate::entities::{prelude::*, user};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -38,6 +34,18 @@ pub struct ResponseUser {
     pub email: Option<String>,
 }
 
+impl From<user::Model> for ResponseUser {
+    fn from(user: user::Model) -> ResponseUser {
+        ResponseUser {
+            id: user.id,
+            uuid: user.uuid,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+        }
+    }
+}
+
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
@@ -48,13 +56,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|u| ResponseUser {
-            id: u.id,
-            uuid: u.uuid,
-            firstname: u.firstname,
-            lastname: u.lastname,
-            email: u.email,
-        })
+        .map(|u| ResponseUser::from(u))
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {
@@ -96,13 +98,7 @@ pub async fn show(
         None => return Err("404".into()),
     };
 
-    Ok(Json(ResponseUser {
-        id: user.id,
-        uuid: user.uuid,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-    }))
+    Ok(Json(ResponseUser::from(user)))
 }
 
 #[put("/<id>", data = "<req_user>")]

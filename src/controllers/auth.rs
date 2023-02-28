@@ -5,8 +5,7 @@
  * @link   https://afaan.dev
  * @link   https://github.com/AfaanBilal/iron-guard
  */
-use super::success;
-use crate::ErrorResponder;
+use super::{success, ErrorResponder};
 
 #[post("/sign-in")]
 pub async fn sign_in() -> Result<String, ErrorResponder> {

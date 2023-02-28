@@ -12,12 +12,8 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use crate::{
-    entities::{category, prelude::*},
-    ErrorResponder,
-};
-
-use super::{items::ResponseItem, success, ResponseList};
+use super::{items::ResponseItem, success, ErrorResponder, ResponseList};
+use crate::entities::{category, prelude::*};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -38,6 +34,19 @@ pub struct ResponseCategory {
     items: Vec<ResponseItem>,
 }
 
+impl From<category::Model> for ResponseCategory {
+    fn from(category: category::Model) -> ResponseCategory {
+        ResponseCategory {
+            id: category.id,
+            uuid: category.uuid,
+            name: category.name,
+            description: category.description,
+            parent_id: category.parent_id,
+            items: vec![],
+        }
+    }
+}
+
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
@@ -48,14 +57,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|c| ResponseCategory {
-            id: c.id,
-            uuid: c.uuid,
-            name: c.name,
-            description: c.description,
-            parent_id: c.parent_id,
-            items: vec![],
-        })
+        .map(|c| ResponseCategory::from(c))
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {
@@ -101,24 +103,13 @@ pub async fn show(
         .all(db)
         .await?
         .into_iter()
-        .map(|i| ResponseItem {
-            id: i.id,
-            uuid: i.uuid,
-            category_id: i.category_id,
-            name: i.name,
-            description: i.description,
-            quantity: i.quantity,
-        })
+        .map(|i| ResponseItem::from(i))
         .collect::<Vec<_>>();
 
-    Ok(Json(ResponseCategory {
-        id: category.id,
-        uuid: category.uuid,
-        name: category.name,
-        description: category.description,
-        parent_id: category.parent_id,
-        items,
-    }))
+    let mut response = ResponseCategory::from(category);
+    response.items = items;
+
+    Ok(Json(response))
 }
 
 #[put("/<id>", data = "<req_category>")]

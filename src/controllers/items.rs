@@ -12,12 +12,8 @@ use rocket::{
 use sea_orm::*;
 use uuid::Uuid;
 
-use crate::{
-    entities::{item, prelude::*},
-    ErrorResponder,
-};
-
-use super::{success, ResponseList};
+use super::{success, ErrorResponder, ResponseList};
+use crate::entities::{item, prelude::*};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -39,6 +35,19 @@ pub struct ResponseItem {
     pub quantity: u32,
 }
 
+impl From<item::Model> for ResponseItem {
+    fn from(item: item::Model) -> ResponseItem {
+        ResponseItem {
+            id: item.id,
+            uuid: item.uuid,
+            category_id: item.category_id,
+            name: item.name,
+            description: item.description,
+            quantity: item.quantity,
+        }
+    }
+}
+
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
@@ -49,14 +58,7 @@ pub async fn index(
         .all(db)
         .await?
         .into_iter()
-        .map(|i| ResponseItem {
-            id: i.id,
-            uuid: i.uuid,
-            category_id: i.category_id,
-            name: i.name,
-            description: i.description,
-            quantity: i.quantity,
-        })
+        .map(|i| ResponseItem::from(i))
         .collect::<Vec<_>>();
 
     Ok(Json(ResponseList {
@@ -98,14 +100,7 @@ pub async fn show(
         None => return Err("404".into()),
     };
 
-    Ok(Json(ResponseItem {
-        id: item.id,
-        uuid: item.uuid,
-        category_id: item.category_id,
-        name: item.name,
-        description: item.description,
-        quantity: item.quantity,
-    }))
+    Ok(Json(ResponseItem::from(item)))
 }
 
 #[put("/<id>", data = "<req_item>")]
