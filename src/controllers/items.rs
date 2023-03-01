@@ -69,6 +69,7 @@ pub async fn index(
     let db = db as &DatabaseConnection;
 
     let items = Item::find()
+        .order_by_desc(item::Column::UpdatedAt)
         .all(db)
         .await?
         .into_iter()

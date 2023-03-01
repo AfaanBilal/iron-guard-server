@@ -75,6 +75,7 @@ pub async fn index(
     let db = db as &DatabaseConnection;
 
     let users = User::find()
+        .order_by_desc(user::Column::UpdatedAt)
         .all(db)
         .await?
         .into_iter()

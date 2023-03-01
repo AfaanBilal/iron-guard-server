@@ -18,7 +18,7 @@ use super::{
     auth::AuthenticatedUser, items::ResponseItem, not_found, success, users::ResponseUser,
     ErrorResponder, ResponseList,
 };
-use crate::entities::{category, prelude::*};
+use crate::entities::{category, prelude::*, item};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -74,6 +74,7 @@ pub async fn index(
     let db = db as &DatabaseConnection;
 
     let categories = Category::find()
+        .order_by_desc(category::Column::UpdatedAt)
         .all(db)
         .await?
         .into_iter()
@@ -123,6 +124,7 @@ pub async fn show(
 
     let items = category
         .find_related(Item)
+        .order_by_desc(item::Column::UpdatedAt)
         .all(db)
         .await?
         .into_iter()
@@ -131,6 +133,7 @@ pub async fn show(
 
     let children = Category::find()
         .filter(category::Column::ParentId.eq(category.id))
+        .order_by_desc(category::Column::UpdatedAt)
         .all(db)
         .await?
         .into_iter()
