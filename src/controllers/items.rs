@@ -53,11 +53,25 @@ impl From<item::Model> for ResponseItem {
 }
 
 impl Item {
-    async fn from_uuid(db: &DatabaseConnection, uuid: &str) -> Result<Option<item::Model>, DbErr> {
+    pub async fn from_uuid(
+        db: &DatabaseConnection,
+        uuid: &str,
+    ) -> Result<Option<item::Model>, DbErr> {
         Item::find()
             .filter(item::Column::Uuid.eq(uuid))
             .one(db)
             .await
+    }
+
+    pub async fn latest(db: &DatabaseConnection, count: u64) -> Result<Vec<ResponseItem>, DbErr> {
+        Ok(Item::find()
+            .order_by_desc(item::Column::UpdatedAt)
+            .limit(count)
+            .all(db)
+            .await?
+            .into_iter()
+            .map(ResponseItem::from)
+            .collect::<Vec<_>>())
     }
 }
 

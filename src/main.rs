@@ -81,6 +81,7 @@ async fn rocket() -> _ {
         .register("/", catchers![bad_request, unauthorized, not_found])
         .mount("/", routes![index])
         .mount("/auth", routes![controllers::auth::sign_in])
+        .mount("/dashboard", routes![controllers::dashboard::index])
         .mount(
             "/me",
             routes![controllers::me::index, controllers::me::update],

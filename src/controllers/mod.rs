@@ -11,6 +11,7 @@ use serde_json::json;
 
 pub mod auth;
 pub mod categories;
+pub mod dashboard;
 pub mod items;
 pub mod me;
 pub mod users;

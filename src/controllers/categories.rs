@@ -18,7 +18,7 @@ use super::{
     auth::AuthenticatedUser, items::ResponseItem, not_found, success, users::ResponseUser,
     ErrorResponder, ResponseList,
 };
-use crate::entities::{category, prelude::*, item};
+use crate::entities::{category, item, prelude::*};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -55,7 +55,7 @@ impl From<category::Model> for ResponseCategory {
 }
 
 impl Category {
-    async fn from_uuid(
+    pub async fn from_uuid(
         db: &DatabaseConnection,
         uuid: &str,
     ) -> Result<Option<category::Model>, DbErr> {
@@ -63,6 +63,17 @@ impl Category {
             .filter(category::Column::Uuid.eq(uuid))
             .one(db)
             .await
+    }
+
+    pub async fn latest(db: &DatabaseConnection, count: u64) -> Result<Vec<ResponseCategory>, DbErr> {
+        Ok(Category::find()
+            .order_by_desc(category::Column::UpdatedAt)
+            .limit(count)
+            .all(db)
+            .await?
+            .into_iter()
+            .map(ResponseCategory::from)
+            .collect::<Vec<_>>())
     }
 }
 

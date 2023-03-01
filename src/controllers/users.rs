@@ -55,11 +55,25 @@ impl From<user::Model> for ResponseUser {
 }
 
 impl User {
-    async fn from_uuid(db: &DatabaseConnection, uuid: &str) -> Result<Option<user::Model>, DbErr> {
+    pub async fn from_uuid(
+        db: &DatabaseConnection,
+        uuid: &str,
+    ) -> Result<Option<user::Model>, DbErr> {
         User::find()
             .filter(user::Column::Uuid.eq(uuid))
             .one(db)
             .await
+    }
+
+    pub async fn latest(db: &DatabaseConnection, count: u64) -> Result<Vec<ResponseUser>, DbErr> {
+        Ok(User::find()
+            .order_by_desc(user::Column::UpdatedAt)
+            .limit(count)
+            .all(db)
+            .await?
+            .into_iter()
+            .map(ResponseUser::from)
+            .collect::<Vec<_>>())
     }
 }
 
