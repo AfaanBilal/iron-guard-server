@@ -104,7 +104,7 @@ pub async fn store(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let new_item = item::ActiveModel {
+    Item::insert(item::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
         user_id: Set(user.id),
         category_id: Set(req_item.category_id),
@@ -112,9 +112,9 @@ pub async fn store(
         description: Set(req_item.description.to_owned()),
         quantity: Set(req_item.quantity),
         ..Default::default()
-    };
-
-    Item::insert(new_item).exec(db).await?;
+    })
+    .exec(db)
+    .await?;
 
     success()
 }

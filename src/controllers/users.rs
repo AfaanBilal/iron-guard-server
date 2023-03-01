@@ -114,7 +114,7 @@ pub async fn store(
 
     let db = db as &DatabaseConnection;
 
-    let new_user = user::ActiveModel {
+    User::insert(user::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
         role: Set(req_user.role.to_owned()),
         firstname: Set(req_user.firstname.to_owned()),
@@ -122,9 +122,9 @@ pub async fn store(
         email: Set(req_user.email.to_owned()),
         password: Set(hash(req_user.password, DEFAULT_COST).unwrap()),
         ..Default::default()
-    };
-
-    User::insert(new_user).exec(db).await?;
+    })
+    .exec(db)
+    .await?;
 
     success()
 }

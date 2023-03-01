@@ -65,7 +65,10 @@ impl Category {
             .await
     }
 
-    pub async fn latest(db: &DatabaseConnection, count: u64) -> Result<Vec<ResponseCategory>, DbErr> {
+    pub async fn latest(
+        db: &DatabaseConnection,
+        count: u64,
+    ) -> Result<Vec<ResponseCategory>, DbErr> {
         Ok(Category::find()
             .order_by_desc(category::Column::UpdatedAt)
             .limit(count)
@@ -106,16 +109,16 @@ pub async fn store(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
-    let new_category = category::ActiveModel {
+    Category::insert(category::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
         user_id: Set(user.id),
         name: Set(req_category.name.to_owned()),
         description: Set(req_category.description.to_owned()),
         parent_id: Set(req_category.parent_id),
         ..Default::default()
-    };
-
-    Category::insert(new_category).exec(db).await?;
+    })
+    .exec(db)
+    .await?;
 
     success()
 }
