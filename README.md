@@ -1,5 +1,5 @@
-[🚧] Iron Guard Server
-=======================
+📦 Iron Guard Server
+=====================
 
 > Iron Guard Server is an inventory management system server written in Rust.
 
