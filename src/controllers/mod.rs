@@ -3,7 +3,7 @@
  *
  * @author Afaan Bilal
  * @link   https://afaan.dev
- * @link   https://github.com/AfaanBilal/iron-guard
+ * @link   https://github.com/AfaanBilal/iron-guard-server
  */
 use rocket::{http::Status, serde::Serialize};
 use sea_orm::DbErr;

@@ -3,7 +3,7 @@
  *
  * @author Afaan Bilal
  * @link   https://afaan.dev
- * @link   https://github.com/AfaanBilal/iron-guard
+ * @link   https://github.com/AfaanBilal/iron-guard-server
  */
 use super::super::rocket;
 use crate::test::utils::{delete_test_user, get_auth_header, get_client};
