@@ -159,7 +159,7 @@ async fn index() {
 #[async_test]
 async fn should_401() {
     let client = get_client().await;
-    let response = client.get("/users").dispatch().await;
+    let response = client.get("/me").dispatch().await;
 
     assert_eq!(response.status(), Status::Unauthorized);
     assert_eq!(
