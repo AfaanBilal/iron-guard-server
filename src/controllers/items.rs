@@ -22,7 +22,7 @@ use crate::entities::{item, prelude::*};
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct RequestItem<'r> {
-    category_id: Option<i32>,
+    category_uuid: Option<String>,
     name: &'r str,
     description: Option<String>,
     quantity: u32,
@@ -104,10 +104,17 @@ pub async fn store(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
+    let mut category: Option<i32> = None;
+    if let Some(category_uuid) = req_item.category_uuid.to_owned() {
+        if let Some(c) = Category::from_uuid(db, category_uuid.as_str()).await? {
+            category = Some(c.id);
+        }
+    }
+
     Item::insert(item::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
         user_id: Set(user.id),
-        category_id: Set(req_item.category_id),
+        category_id: Set(category),
         name: Set(req_item.name.to_owned()),
         description: Set(req_item.description.to_owned()),
         quantity: Set(req_item.quantity),
@@ -165,7 +172,14 @@ pub async fn update(
         None => return Err(not_found()),
     };
 
-    item.category_id = Set(req_item.category_id);
+    let mut category: Option<i32> = None;
+    if let Some(category_uuid) = req_item.category_uuid.to_owned() {
+        if let Some(c) = Category::from_uuid(db, category_uuid.as_str()).await? {
+            category = Some(c.id);
+        }
+    }
+
+    item.category_id = Set(category);
     item.name = Set(req_item.name.to_owned());
     item.description = Set(req_item.description.to_owned());
     item.quantity = Set(req_item.quantity);

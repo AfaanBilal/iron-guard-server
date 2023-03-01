@@ -25,7 +25,7 @@ use crate::entities::{category, item, prelude::*};
 pub struct RequestCategory<'r> {
     name: &'r str,
     description: Option<String>,
-    parent_id: Option<i32>,
+    parent_uuid: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -111,12 +111,19 @@ pub async fn store(
 ) -> Result<String, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
+    let mut parent: Option<i32> = None;
+    if let Some(parent_uuid) = req_category.parent_uuid.to_owned() {
+        if let Some(p) = Category::from_uuid(db, parent_uuid.as_str()).await? {
+            parent = Some(p.id);
+        }
+    }
+
     Category::insert(category::ActiveModel {
         uuid: Set(Uuid::new_v4().to_string()),
         user_id: Set(user.id),
         name: Set(req_category.name.to_owned()),
         description: Set(req_category.description.to_owned()),
-        parent_id: Set(req_category.parent_id),
+        parent_id: Set(parent),
         ..Default::default()
     })
     .exec(db)
@@ -185,9 +192,16 @@ pub async fn update(
         None => return Err(not_found()),
     };
 
+    let mut parent: Option<i32> = None;
+    if let Some(parent_uuid) = req_category.parent_uuid.to_owned() {
+        if let Some(p) = Category::from_uuid(db, parent_uuid.as_str()).await? {
+            parent = Some(p.id);
+        }
+    }
+
     category.name = Set(req_category.name.to_owned());
     category.description = Set(req_category.description.to_owned());
-    category.parent_id = Set(req_category.parent_id);
+    category.parent_id = Set(parent);
 
     category.updated_at = Set(DateTimeUtc::from(SystemTime::now()));
 
