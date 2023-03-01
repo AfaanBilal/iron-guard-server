@@ -37,6 +37,7 @@ pub struct ResponseCategory {
     parent_id: Option<i32>,
     user: Option<ResponseUser>,
     items: Vec<ResponseItem>,
+    children: Vec<ResponseCategory>,
 }
 
 impl From<category::Model> for ResponseCategory {
@@ -46,8 +47,9 @@ impl From<category::Model> for ResponseCategory {
             name: category.name,
             description: category.description,
             parent_id: category.parent_id,
-            items: vec![],
             user: None,
+            items: vec![],
+            children: vec![],
         }
     }
 }
@@ -127,11 +129,21 @@ pub async fn show(
         .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
+    let children = Category::find()
+        .filter(category::Column::ParentId.eq(category.id))
+        .all(db)
+        .await?
+        .into_iter()
+        .map(ResponseCategory::from)
+        .collect::<Vec<_>>();
+
     let user = category.find_related(User).one(db).await?.unwrap();
 
     let mut response = ResponseCategory::from(category);
-    response.items = items;
+
     response.user = Some(ResponseUser::from(user));
+    response.items = items;
+    response.children = children;
 
     Ok(Json(response))
 }
