@@ -35,6 +35,7 @@ pub struct ResponseCategory {
     name: String,
     description: Option<String>,
     parent_uuid: Option<String>,
+    item_count: Option<usize>,
     user: Option<ResponseUser>,
     items: Vec<ResponseItem>,
     children: Vec<ResponseCategory>,
@@ -47,6 +48,7 @@ impl From<&category::Model> for ResponseCategory {
             name: category.name.to_owned(),
             description: category.description.to_owned(),
             parent_uuid: None,
+            item_count: None,
             user: None,
             items: vec![],
             children: vec![],
@@ -136,7 +138,13 @@ pub async fn show(
         None => return Err(not_found()),
     };
 
-    let items = category
+    let mut response = ResponseCategory::from(&category);
+
+    response.user = Some(ResponseUser::from(
+        category.find_related(User).one(db).await?.unwrap(),
+    ));
+
+    response.items = category
         .find_related(Item)
         .order_by_desc(item::Column::UpdatedAt)
         .all(db)
@@ -145,7 +153,9 @@ pub async fn show(
         .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
-    let children = Category::find()
+    response.item_count = Some(category.find_related(Item).count(db).await?);
+
+    response.children = Category::find()
         .filter(category::Column::ParentId.eq(category.id))
         .order_by_desc(category::Column::UpdatedAt)
         .all(db)
@@ -154,17 +164,9 @@ pub async fn show(
         .map(ResponseCategory::from)
         .collect::<Vec<_>>();
 
-    let user = category.find_related(User).one(db).await?.unwrap();
-
-    let mut response = ResponseCategory::from(&category);
-
     if let Some(parent_id) = category.parent_id {
         response.parent_uuid = Some(Category::find_by_id(parent_id).one(db).await?.unwrap().uuid);
     }
-
-    response.user = Some(ResponseUser::from(user));
-    response.items = items;
-    response.children = children;
 
     Ok(Json(response))
 }
