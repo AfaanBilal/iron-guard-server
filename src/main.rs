@@ -61,7 +61,7 @@ impl Fairing for CORS {
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
         response.set_header(Header::new(
             "Access-Control-Allow-Methods",
-            "POST, GET, PATCH, OPTIONS",
+            "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         ));
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
@@ -88,6 +88,11 @@ fn not_found() -> &'static str {
     "404 Not Found"
 }
 
+#[options("/<_..>")]
+fn options() -> &'static str {
+    ""
+}
+
 #[launch]
 async fn rocket() -> _ {
     let config = Config::make();
@@ -107,6 +112,7 @@ async fn rocket() -> _ {
         .manage(config)
         .manage(db)
         .register("/", catchers![bad_request, unauthorized, not_found])
+        .mount("/", routes![options])
         .mount("/", routes![index])
         .mount("/auth", routes![controllers::auth::sign_in])
         .mount("/dashboard", routes![controllers::dashboard::index])
