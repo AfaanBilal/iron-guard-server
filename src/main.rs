@@ -9,6 +9,11 @@
 #[macro_use]
 extern crate rocket;
 use migrator::Migrator;
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    http::Header,
+    Request, Response,
+};
 use sea_orm_migration::prelude::*;
 
 mod controllers;
@@ -38,6 +43,28 @@ impl Config {
             db_database: std::env::var("IRON_GUARD_DB_DATABASE")
                 .unwrap_or("iron_guard".to_string()),
         }
+    }
+}
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers",
+            kind: Kind::Response,
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PATCH, OPTIONS",
+        ));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
 }
 
@@ -76,6 +103,7 @@ async fn rocket() -> _ {
     };
 
     rocket::build()
+        .attach(CORS)
         .manage(config)
         .manage(db)
         .register("/", catchers![bad_request, unauthorized, not_found])
