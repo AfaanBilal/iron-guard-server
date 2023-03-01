@@ -26,13 +26,33 @@ pub struct ResponseInventory {
 #[get("/")]
 pub async fn index(
     db: &State<DatabaseConnection>,
+    user: AuthenticatedUser,
+) -> Result<Json<ResponseInventory>, ErrorResponder> {
+    by_category(db, user, None).await
+}
+
+#[get("/<uuid>")]
+pub async fn by_category(
+    db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
+    uuid: Option<String>,
 ) -> Result<Json<ResponseInventory>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
+    let mut f1 = category::Column::ParentId.is_null();
+    let mut f2 = item::Column::CategoryId.is_null();
+    if let Some(uuid) = uuid {
+        let c = Category::from_uuid(db, uuid.as_str()).await?;
+
+        if let Some(c) = c {
+            f1 = category::Column::ParentId.eq(c.id);
+            f2 = item::Column::CategoryId.eq(c.id);
+        }
+    }
+
     Ok(Json(ResponseInventory {
         categories: Category::find()
-            .filter(category::Column::ParentId.is_null())
+            .filter(f1)
             .order_by_desc(category::Column::UpdatedAt)
             .all(db)
             .await?
@@ -40,7 +60,7 @@ pub async fn index(
             .map(ResponseCategory::from)
             .collect::<Vec<_>>(),
         items: Item::find()
-            .filter(item::Column::CategoryId.is_null())
+            .filter(f2)
             .order_by_desc(item::Column::UpdatedAt)
             .all(db)
             .await?
