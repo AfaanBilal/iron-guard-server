@@ -3,7 +3,9 @@
 
 > Iron Guard Server is an inventory management system server written in Rust.
 
-**Author**: [Afaan Bilal](https://afaan.dev)
+---
+
+### **Author**: [Afaan Bilal](https://afaan.dev)
 
 ---
 
