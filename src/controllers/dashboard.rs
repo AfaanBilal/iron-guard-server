@@ -45,7 +45,7 @@ pub async fn index(
     let mut user_count = 0;
 
     if user.role == Role::Admin {
-        users = User::latest(&db, LATEST_COUNT).await?;
+        users = User::latest(db, LATEST_COUNT).await?;
         user_count = User::find().count(db).await?;
     }
 
@@ -55,7 +55,7 @@ pub async fn index(
         count_items: Item::find().count(db).await?,
 
         latest_users: users,
-        latest_categories: Category::latest(&db, LATEST_COUNT).await?,
-        latest_items: Item::latest(&db, LATEST_COUNT).await?,
+        latest_categories: Category::latest(db, LATEST_COUNT).await?,
+        latest_items: Item::latest(db, LATEST_COUNT).await?,
     }))
 }
