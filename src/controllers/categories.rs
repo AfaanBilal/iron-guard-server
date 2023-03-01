@@ -34,19 +34,19 @@ pub struct ResponseCategory {
     uuid: String,
     name: String,
     description: Option<String>,
-    parent_id: Option<i32>,
+    parent_uuid: Option<String>,
     user: Option<ResponseUser>,
     items: Vec<ResponseItem>,
     children: Vec<ResponseCategory>,
 }
 
-impl From<category::Model> for ResponseCategory {
-    fn from(category: category::Model) -> ResponseCategory {
+impl From<&category::Model> for ResponseCategory {
+    fn from(category: &category::Model) -> ResponseCategory {
         ResponseCategory {
-            uuid: category.uuid,
-            name: category.name,
-            description: category.description,
-            parent_id: category.parent_id,
+            uuid: category.uuid.to_owned(),
+            name: category.name.to_owned(),
+            description: category.description.to_owned(),
+            parent_uuid: None,
             user: None,
             items: vec![],
             children: vec![],
@@ -74,7 +74,7 @@ impl Category {
             .limit(count)
             .all(db)
             .await?
-            .into_iter()
+            .iter()
             .map(ResponseCategory::from)
             .collect::<Vec<_>>())
     }
@@ -91,7 +91,7 @@ pub async fn index(
         .order_by_desc(category::Column::UpdatedAt)
         .all(db)
         .await?
-        .into_iter()
+        .iter()
         .map(ResponseCategory::from)
         .collect::<Vec<_>>();
 
@@ -141,7 +141,7 @@ pub async fn show(
         .order_by_desc(item::Column::UpdatedAt)
         .all(db)
         .await?
-        .into_iter()
+        .iter()
         .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
@@ -150,13 +150,17 @@ pub async fn show(
         .order_by_desc(category::Column::UpdatedAt)
         .all(db)
         .await?
-        .into_iter()
+        .iter()
         .map(ResponseCategory::from)
         .collect::<Vec<_>>();
 
     let user = category.find_related(User).one(db).await?.unwrap();
 
-    let mut response = ResponseCategory::from(category);
+    let mut response = ResponseCategory::from(&category);
+
+    if let Some(parent_id) = category.parent_id {
+        response.parent_uuid = Some(Category::find_by_id(parent_id).one(db).await?.unwrap().uuid);
+    }
 
     response.user = Some(ResponseUser::from(user));
     response.items = items;

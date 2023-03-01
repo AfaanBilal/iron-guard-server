@@ -32,21 +32,21 @@ pub struct RequestItem<'r> {
 #[serde(crate = "rocket::serde")]
 pub struct ResponseItem {
     pub uuid: String,
-    pub category_id: Option<i32>,
+    pub category_uuid: Option<String>,
     pub user: Option<ResponseUser>,
     pub name: String,
     pub description: Option<String>,
     pub quantity: u32,
 }
 
-impl From<item::Model> for ResponseItem {
-    fn from(item: item::Model) -> ResponseItem {
+impl From<&item::Model> for ResponseItem {
+    fn from(item: &item::Model) -> ResponseItem {
         ResponseItem {
-            uuid: item.uuid,
-            category_id: item.category_id,
+            uuid: item.uuid.to_owned(),
+            category_uuid: None,
             user: None,
-            name: item.name,
-            description: item.description,
+            name: item.name.to_owned(),
+            description: item.description.to_owned(),
             quantity: item.quantity,
         }
     }
@@ -69,7 +69,7 @@ impl Item {
             .limit(count)
             .all(db)
             .await?
-            .into_iter()
+            .iter()
             .map(ResponseItem::from)
             .collect::<Vec<_>>())
     }
@@ -86,7 +86,7 @@ pub async fn index(
         .order_by_desc(item::Column::UpdatedAt)
         .all(db)
         .await?
-        .into_iter()
+        .iter()
         .map(ResponseItem::from)
         .collect::<Vec<_>>();
 
@@ -134,7 +134,18 @@ pub async fn show(
 
     let user = item.find_related(User).one(db).await?.unwrap();
 
-    let mut response = ResponseItem::from(item);
+    let mut response = ResponseItem::from(&item);
+
+    if let Some(category_id) = item.category_id {
+        response.category_uuid = Some(
+            Category::find_by_id(category_id)
+                .one(db)
+                .await?
+                .unwrap()
+                .uuid,
+        );
+    }
+
     response.user = Some(ResponseUser::from(user));
 
     Ok(Json(response))
