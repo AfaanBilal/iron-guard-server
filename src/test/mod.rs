@@ -12,6 +12,7 @@ use rocket::http::Status;
 
 pub mod auth_test;
 pub mod category_test;
+pub mod inventory_test;
 pub mod item_test;
 pub mod user_test;
 

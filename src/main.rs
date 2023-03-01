@@ -86,6 +86,7 @@ async fn rocket() -> _ {
             "/me",
             routes![controllers::me::index, controllers::me::update],
         )
+        .mount("/inventory", routes![controllers::inventory::index])
         .mount(
             "/users",
             routes![
