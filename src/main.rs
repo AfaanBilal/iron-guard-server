@@ -27,7 +27,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Config {
+    pub fn make() -> Config {
         Config {
             secret: std::env::var("IRON_GUARD_SECRET").unwrap_or("test".to_string()),
             db_type: std::env::var("IRON_GUARD_DB_TYPE").unwrap_or("mysql".to_string()),
@@ -63,7 +63,7 @@ fn not_found() -> &'static str {
 
 #[launch]
 async fn rocket() -> _ {
-    let config = Config::new();
+    let config = Config::make();
 
     let db = match db::connect(&config).await {
         Ok(db) => db,

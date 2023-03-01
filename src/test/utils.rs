@@ -22,7 +22,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 pub async fn get_db() -> DatabaseConnection {
-    let db = match db::connect(&Config::new()).await {
+    let db = match db::connect(&Config::make()).await {
         Ok(db) => db,
         Err(err) => panic!("{}", err),
     };
