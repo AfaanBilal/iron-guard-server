@@ -6,7 +6,7 @@
  * @link   https://github.com/AfaanBilal/iron-guard
  */
 use super::super::rocket;
-use crate::test::{delete_test_user, get_auth_header, get_client};
+use crate::test::utils::{delete_test_user, get_auth_header, get_client};
 use rocket::http::Status;
 use serde_json::json;
 

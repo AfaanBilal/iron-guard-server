@@ -157,7 +157,7 @@ pub async fn update(
     user.lastname = Set(req_user.lastname.to_owned());
     user.email = Set(req_user.email.to_owned());
 
-    if req_user.password != "" {
+    if !req_user.password.is_empty() {
         user.password = Set(hash(req_user.password, DEFAULT_COST).unwrap());
     }
 
