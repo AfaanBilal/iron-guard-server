@@ -15,10 +15,9 @@ use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
-    auth::AuthenticatedUser, items::ResponseItem, not_found, success, users::ResponseUser,
-    ErrorResponder, ResponseList,
+    auth::AuthenticatedUser, not_found, success, users::ResponseUser, ErrorResponder, ResponseList,
 };
-use crate::entities::{category, item, prelude::*};
+use crate::entities::{category, prelude::*};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -34,11 +33,9 @@ pub struct ResponseCategory {
     uuid: String,
     name: String,
     description: Option<String>,
-    parent_uuid: Option<String>,
+    parent: Option<Box<ResponseCategory>>,
     item_count: Option<usize>,
     user: Option<ResponseUser>,
-    items: Vec<ResponseItem>,
-    children: Vec<ResponseCategory>,
 }
 
 impl From<&category::Model> for ResponseCategory {
@@ -47,11 +44,9 @@ impl From<&category::Model> for ResponseCategory {
             uuid: category.uuid.to_owned(),
             name: category.name.to_owned(),
             description: category.description.to_owned(),
-            parent_uuid: None,
+            parent: None,
             item_count: None,
             user: None,
-            items: vec![],
-            children: vec![],
         }
     }
 }
@@ -151,28 +146,10 @@ pub async fn show(
         category.find_related(User).one(db).await?.unwrap(),
     ));
 
-    response.items = category
-        .find_related(Item)
-        .order_by_desc(item::Column::UpdatedAt)
-        .all(db)
-        .await?
-        .iter()
-        .map(ResponseItem::from)
-        .collect::<Vec<_>>();
-
     response.item_count = Some(category.find_related(Item).count(db).await?);
 
-    response.children = Category::find()
-        .filter(category::Column::ParentId.eq(category.id))
-        .order_by_desc(category::Column::UpdatedAt)
-        .all(db)
-        .await?
-        .iter()
-        .map(ResponseCategory::from)
-        .collect::<Vec<_>>();
-
     if let Some(parent_id) = category.parent_id {
-        response.parent_uuid = Some(Category::find_by_id(parent_id).one(db).await?.unwrap().uuid);
+        response.parent = Some(Box::new(ResponseCategory::from(&Category::find_by_id(parent_id).one(db).await?.unwrap())));
     }
 
     Ok(Json(response))
