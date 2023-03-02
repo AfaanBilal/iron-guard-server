@@ -149,7 +149,9 @@ pub async fn show(
     response.item_count = Some(category.find_related(Item).count(db).await?);
 
     if let Some(parent_id) = category.parent_id {
-        response.parent = Some(Box::new(ResponseCategory::from(&Category::find_by_id(parent_id).one(db).await?.unwrap())));
+        response.parent = Some(Box::new(ResponseCategory::from(
+            &Category::find_by_id(parent_id).one(db).await?.unwrap(),
+        )));
     }
 
     Ok(Json(response))

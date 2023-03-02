@@ -15,7 +15,8 @@ use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
-    auth::AuthenticatedUser, not_found, success, users::ResponseUser, ErrorResponder, ResponseList,
+    auth::AuthenticatedUser, categories::ResponseCategory, not_found, success, users::ResponseUser,
+    ErrorResponder, ResponseList,
 };
 use crate::entities::{item, prelude::*};
 
@@ -32,7 +33,7 @@ pub struct RequestItem<'r> {
 #[serde(crate = "rocket::serde")]
 pub struct ResponseItem {
     pub uuid: String,
-    pub category_uuid: Option<String>,
+    pub category: Option<ResponseCategory>,
     pub user: Option<ResponseUser>,
     pub name: String,
     pub description: Option<String>,
@@ -43,7 +44,7 @@ impl From<&item::Model> for ResponseItem {
     fn from(item: &item::Model) -> ResponseItem {
         ResponseItem {
             uuid: item.uuid.to_owned(),
-            category_uuid: None,
+            category: None,
             user: None,
             name: item.name.to_owned(),
             description: item.description.to_owned(),
@@ -144,13 +145,9 @@ pub async fn show(
     let mut response = ResponseItem::from(&item);
 
     if let Some(category_id) = item.category_id {
-        response.category_uuid = Some(
-            Category::find_by_id(category_id)
-                .one(db)
-                .await?
-                .unwrap()
-                .uuid,
-        );
+        response.category = Some(ResponseCategory::from(
+            &Category::find_by_id(category_id).one(db).await?.unwrap(),
+        ));
     }
 
     response.user = Some(ResponseUser::from(user));
