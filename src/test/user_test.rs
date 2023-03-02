@@ -6,7 +6,7 @@
  * @link   https://github.com/AfaanBilal/iron-guard-server
  */
 use super::super::rocket;
-#[allow(dead_code)]
+#[allow(unused_imports)]
 use crate::test::utils::{create_test_user, create_test_admin, delete_test_user, get_auth_header, get_client};
 use rocket::http::Status;
 use serde_json::json;
