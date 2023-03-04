@@ -70,7 +70,7 @@ impl Fairing for CORS {
 
 #[get("/")]
 fn index() -> &'static str {
-    "Iron Guard"
+    "Iron Guard by Afaan Bilal (https://afaan.dev)"
 }
 
 #[catch(400)]
