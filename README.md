@@ -9,6 +9,21 @@
 
 ---
 
+## Run with Docker <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" title="Docker" width="50px" style="float:right" />
+
+````
+docker run --rm -it -p 8000:8000 \
+    -e ROCKET_ADDRESS=0.0.0.0 \
+    -e IRON_GUARD_SECRET=[RANDOM SECRET] \
+    -e IRON_GUARD_DB_HOST=host.docker.internal \
+    -e IRON_GUARD_DB_PORT=3306 \
+    -e IRON_GUARD_DB_USERNAME=[DB USERNAME] \
+    -e IRON_GUARD_DB_PASSWORD=[DB PASSWORD] \
+    afaanbilal/iron-guard-server
+````
+
+---
+
 ## Configuration
 The following environment variables configure the server.
 
@@ -21,7 +36,7 @@ The following environment variables configure the server.
 | IRON_GUARD_DB_USERNAME | `root`        | Database Username                    |
 | IRON_GUARD_DB_PASSWORD | `[blank]`     | Database Password                    |
 | IRON_GUARD_DB_DATABASE | `iron_guard`  | Database Name                        |
-| ROCKET_ADDRESS         | `0.0.0.0`     | HTTP Server Bind Address             |
+| ROCKET_ADDRESS         | `127.0.0.1`   | HTTP Server Bind Address             |
 | ROCKET_PORT            | `8000`        | HTTP Server Port                     |
 
 ---
