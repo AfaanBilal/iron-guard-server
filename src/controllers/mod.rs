@@ -25,6 +25,11 @@ pub struct ResponseList<T> {
 }
 
 #[derive(Responder)]
+pub enum SuccessResponder {
+    Success((Status, String)),
+}
+
+#[derive(Responder)]
 pub enum ErrorResponder {
     Error((Status, String)),
 }
@@ -33,11 +38,6 @@ impl From<DbErr> for ErrorResponder {
     fn from(err: DbErr) -> Self {
         ErrorResponder::Error((Status::InternalServerError, err.to_string()))
     }
-}
-
-#[derive(Responder)]
-pub enum SuccessResponder {
-    Success((Status, String)),
 }
 
 type Response = Result<SuccessResponder, ErrorResponder>;
