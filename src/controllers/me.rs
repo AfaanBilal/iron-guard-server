@@ -10,11 +10,11 @@ use std::time::SystemTime;
 use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
     serde::{json::Json, Deserialize},
-    *,
+    *, http::Status,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
 
-use super::{auth::AuthenticatedUser, success, users::ResponseUser, ErrorResponder};
+use super::{auth::AuthenticatedUser, success, users::ResponseUser, ErrorResponder, Response};
 use crate::entities::{prelude::*, user};
 
 #[derive(Deserialize)]
@@ -43,7 +43,7 @@ pub async fn update(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
     req_me: Json<RequestMe<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let mut user: user::ActiveModel = User::find_by_id(user.id).one(db).await?.unwrap().into();
@@ -60,5 +60,5 @@ pub async fn update(
 
     user.update(db).await?;
 
-    success()
+    success(Status::Ok)
 }

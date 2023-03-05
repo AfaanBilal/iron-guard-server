@@ -35,8 +35,10 @@ impl From<DbErr> for ErrorResponder {
     }
 }
 
-pub fn success() -> Result<String, ErrorResponder> {
-    Ok(json!({ "status": "success" }).to_string())
+type Response = Result<(Status, String), ErrorResponder>;
+
+pub fn success(status: Status) -> Response {
+    Ok((status, json!({ "status": "success" }).to_string()))
 }
 
 pub fn error_response(status: Status, message: String) -> ErrorResponder {

@@ -10,7 +10,7 @@ use std::time::SystemTime;
 use bcrypt::{hash, DEFAULT_COST};
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
-    *,
+    *, http::Status,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
@@ -18,7 +18,7 @@ use uuid::Uuid;
 use super::{
     admin_required,
     auth::{AuthenticatedUser, Role},
-    not_found, success, ErrorResponder, ResponseList,
+    not_found, success, ErrorResponder, ResponseList, Response,
 };
 use crate::entities::{prelude::*, user};
 
@@ -107,7 +107,7 @@ pub async fn store(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
     req_user: Json<RequestUser<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     if user.role != Role::Admin {
         return Err(admin_required());
     }
@@ -126,7 +126,7 @@ pub async fn store(
     .exec(db)
     .await?;
 
-    success()
+    success(Status::Created)
 }
 
 #[get("/<uuid>")]
@@ -155,7 +155,7 @@ pub async fn update(
     user: AuthenticatedUser,
     uuid: &str,
     req_user: Json<RequestUser<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     if user.role != Role::Admin {
         return Err(admin_required());
     }
@@ -180,7 +180,7 @@ pub async fn update(
 
     user.update(db).await?;
 
-    success()
+    success(Status::Ok)
 }
 
 #[delete("/<uuid>")]
@@ -188,7 +188,7 @@ pub async fn delete(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
     uuid: &str,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     if user.role != Role::Admin {
         return Err(admin_required());
     }
@@ -202,5 +202,5 @@ pub async fn delete(
 
     user.delete(db).await?;
 
-    success()
+    success(Status::Ok)
 }

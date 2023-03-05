@@ -9,14 +9,14 @@ use std::time::SystemTime;
 
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
-    *,
+    *, http::Status,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
     auth::AuthenticatedUser, categories::ResponseCategory, not_found, success, users::ResponseUser,
-    ErrorResponder, ResponseList,
+    ErrorResponder, ResponseList, Response,
 };
 use crate::entities::{item, prelude::*};
 
@@ -102,7 +102,7 @@ pub async fn store(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
     req_item: Json<RequestItem<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let mut category: Option<i32> = None;
@@ -124,7 +124,7 @@ pub async fn store(
     .exec(db)
     .await?;
 
-    success()
+    success(Status::Created)
 }
 
 #[get("/<uuid>")]
@@ -161,7 +161,7 @@ pub async fn update(
     _user: AuthenticatedUser,
     uuid: &str,
     req_item: Json<RequestItem<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let mut item: item::ActiveModel = match Item::from_uuid(db, uuid).await? {
@@ -185,7 +185,7 @@ pub async fn update(
 
     item.update(db).await?;
 
-    success()
+    success(Status::Ok)
 }
 
 #[delete("/<uuid>")]
@@ -193,7 +193,7 @@ pub async fn delete(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
     uuid: &str,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let item = match Item::from_uuid(db, uuid).await? {
@@ -203,5 +203,5 @@ pub async fn delete(
 
     item.delete(db).await?;
 
-    success()
+    success(Status::Ok)
 }

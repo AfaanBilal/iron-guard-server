@@ -9,13 +9,13 @@ use std::time::SystemTime;
 
 use rocket::{
     serde::{json::Json, Deserialize, Serialize},
-    *,
+    *, http::Status,
 };
 use sea_orm::{prelude::DateTimeUtc, *};
 use uuid::Uuid;
 
 use super::{
-    auth::AuthenticatedUser, not_found, success, users::ResponseUser, ErrorResponder, ResponseList,
+    auth::AuthenticatedUser, not_found, success, users::ResponseUser, ErrorResponder, ResponseList, Response,
 };
 use crate::entities::{category, prelude::*};
 
@@ -98,12 +98,12 @@ pub async fn index(
     }))
 }
 
-#[post("/", data = "<req_category>")]
+#[post("/", data = "<req_category>")] // FIXME: send 201 CREATED
 pub async fn store(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
     req_category: Json<RequestCategory<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let mut parent: Option<i32> = None;
@@ -124,7 +124,7 @@ pub async fn store(
     .exec(db)
     .await?;
 
-    success()
+    success(Status::Created)
 }
 
 #[get("/<uuid>")]
@@ -163,7 +163,7 @@ pub async fn update(
     _user: AuthenticatedUser,
     uuid: &str,
     req_category: Json<RequestCategory<'_>>,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let mut category: category::ActiveModel = match Category::from_uuid(db, uuid).await? {
@@ -186,7 +186,7 @@ pub async fn update(
 
     category.update(db).await?;
 
-    success()
+    success(Status::Ok)
 }
 
 #[delete("/<uuid>")]
@@ -194,7 +194,7 @@ pub async fn delete(
     db: &State<DatabaseConnection>,
     _user: AuthenticatedUser,
     uuid: &str,
-) -> Result<String, ErrorResponder> {
+) -> Response {
     let db = db as &DatabaseConnection;
 
     let category = match Category::from_uuid(db, uuid).await? {
@@ -204,5 +204,5 @@ pub async fn delete(
 
     category.delete(db).await?;
 
-    success()
+    success(Status::Ok)
 }
