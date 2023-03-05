@@ -24,7 +24,7 @@ async fn index() {
     let response = client.get("/").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(response.into_string().await, Some("Iron Guard".into()));
+    assert_eq!(response.into_string().await, Some("Iron Guard by Afaan Bilal (https://afaan.dev)".into()));
 }
 
 #[async_test]

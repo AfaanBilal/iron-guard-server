@@ -54,7 +54,7 @@ async fn should_add_category() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), Status::Created);
 
     delete_test_category().await;
 }
