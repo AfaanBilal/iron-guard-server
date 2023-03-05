@@ -56,6 +56,7 @@ cargo run
 | POST   | /auth/sign-in        | ⬜     | Returns a JWT on success.                      |
 | GET    | /dashboard           | ✅     | Get the dashboard information.                 |
 | GET    | /me                  | ✅     | Get the authenticated user's profile.          |
+| PUT    | /me                  | ✅     | Update the authenticated user's profile.       |
 | GET    | /categories          | ✅     | Get a list of categories.                      |
 | POST   | /categories          | ✅     | Create a category.                             |
 | GET    | /categories/`{uuid}` | ✅     | Get a category with matching the `uuid`.       |
