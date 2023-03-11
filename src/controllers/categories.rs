@@ -98,7 +98,7 @@ pub async fn index(
     }))
 }
 
-#[post("/", data = "<req_category>")] // FIXME: send 201 CREATED
+#[post("/", data = "<req_category>")]
 pub async fn store(
     db: &State<DatabaseConnection>,
     user: AuthenticatedUser,
