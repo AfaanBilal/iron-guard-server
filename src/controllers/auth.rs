@@ -109,7 +109,7 @@ pub async fn sign_in(
 ) -> Result<Json<ResponseSignIn>, ErrorResponder> {
     let db = db as &DatabaseConnection;
     let u: user::Model = match User::find()
-        .filter(user::Column::Email.contains(req_sign_in.email))
+        .filter(user::Column::Email.eq(req_sign_in.email))
         .one(db)
         .await?
     {
